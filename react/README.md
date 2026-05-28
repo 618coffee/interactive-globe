@@ -45,6 +45,18 @@ The component fills its parent — wrap it in something with an explicit width a
 />
 ```
 
+### Hide the top panels, keep only the button bar (no text on buttons)
+
+```jsx
+<InteractiveGlobe
+  panels={{ title: false, info: false }}             // hide top-left + top-right cards
+  strings={{                                          // empty string => icon-only
+    reset: '', zoomIn: '', zoomOut: '',
+    autoRotate: '', labels: '', poi: '', clouds: '', atmosphere: '',
+  }}
+/>
+```
+
 ## Props
 
 All optional.
@@ -53,9 +65,10 @@ All optional.
 |------------------|---------------------------------------|------------------------|-------|
 | `pois`           | `{ name, lat, lon }[]`                | 30 cities              | Glowing markers on the globe. |
 | `labels`         | `{ name, lat, lon, type, lod }[]`     | continents → mountains | `lod` 0–3, smaller = zoom further in to see. |
-| `ui`             | `'full' \| 'minimal' \| 'none'`       | `'full'`               | `minimal` keeps only the bottom button bar; `none` strips all chrome. |
+| `ui`             | `'full' \| 'minimal' \| 'none'`       | `'full'`               | Preset: `minimal` keeps only the bottom button bar; `none` strips all chrome. |
+| `panels`         | `{ title?, info?, bottomBar? }`       |                        | Fine-grained overrides on top of `ui`. Omitted keys inherit from the preset. |
 | `language`       | `'zh' \| 'en'`                        | `'zh'`                 | Built-in UI language. |
-| `strings`        | `Partial<UIStrings>`                  |                        | Override specific UI strings on top of the language bundle. |
+| `strings`        | `Partial<UIStrings>`                  |                        | Override specific UI strings on top of the language bundle. Pass an empty string for a button label to render it **icon-only** (icon always shows; tooltip falls back to English). |
 | `controls`       | `{ reset, zoomIn, zoomOut, autoRotate, labels, markers, clouds, atmosphere }` (all booleans) | all `true` | Per-button visibility in the bottom bar. Omitted keys default to `true`. Hiding a button does **not** change scene state — pair with `showLabels` / `showClouds` etc. if you want the underlying layer off too. |
 | `autoRotate`     | `boolean`                             | `true`                 | |
 | `showClouds`     | `boolean`                             | `true`                 | |

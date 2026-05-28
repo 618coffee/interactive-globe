@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-05-28
+
+### Added
+- **`panels` prop** for granular control over the three UI panels
+  (`title`, `info`, `bottomBar`). Layered on top of the existing `ui`
+  preset — omitted keys inherit from the preset. So e.g.
+  `ui="full" panels={{ info: false }}` keeps the title chip and the
+  bottom bar but hides the live lat/lon readout.
+- **Icon-only button mode.** Passing an empty string for any button
+  label in `strings` renders that button icon-only (the icon stays,
+  the text span is omitted, padding tightens). The `title` and
+  `aria-label` attributes fall back to the English bundle so the
+  button remains accessible.
+
+### Fixed
+- Bottom-bar button labels containing CJK characters could wrap to
+  multiple lines on narrow buttons (e.g. 重置 stacking each character
+  vertically). Added `white-space: nowrap` + `flex: 0 0 auto` to
+  `.ig-btn`.
+
 ## [0.2.0] - 2026-05-28
 
 ### Added
@@ -54,6 +74,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Hand-written TypeScript declarations (`index.d.ts`).
 - MIT license.
 
-[Unreleased]: https://github.com/618coffee/interactive-globe/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/618coffee/interactive-globe/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/618coffee/interactive-globe/releases/tag/v0.3.0
 [0.2.0]: https://github.com/618coffee/interactive-globe/releases/tag/v0.2.0
 [0.1.0]: https://github.com/618coffee/interactive-globe/releases/tag/v0.1.0

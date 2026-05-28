@@ -3,7 +3,7 @@ import { GlobeScene } from './globe-scene.js';
 import { GlobeUI } from './GlobeUI.jsx';
 import { DEFAULT_POIS } from './data/pois.js';
 import { DEFAULT_LABELS } from './data/labels.js';
-import { resolveStrings, resolveControls } from './strings.js';
+import { resolveStrings, resolveControls, resolvePanels } from './strings.js';
 import './styles.css';
 
 /**
@@ -13,8 +13,12 @@ import './styles.css';
  *   pois              array of { name, lat, lon }
  *   labels            array of { name, lat, lon, type, lod }
  *   ui                'full' | 'minimal' | 'none'                  default: 'full'
+ *   panels            granular panel overrides on top of `ui`:
+ *                     { title, info, bottomBar } booleans          default: derived from `ui`
  *   language          'zh' | 'en'                                  default: 'zh'
- *   strings           partial overrides for UI text                default: built-in bundle
+ *   strings           partial overrides for UI text. Pass an empty
+ *                     string for a button label to render that
+ *                     button icon-only.                            default: built-in bundle
  *   controls          per-button visibility in the bottom bar:
  *                     { reset, zoomIn, zoomOut, autoRotate, labels,
  *                       markers, clouds, atmosphere } booleans     default: all true
@@ -36,6 +40,7 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
     pois           = DEFAULT_POIS,
     labels         = DEFAULT_LABELS,
     ui             = 'full',
+    panels: panelsOverride,
     language       = 'zh',
     strings: stringsOverride,
     controls: controlsOverride,
@@ -55,6 +60,8 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
 
   const t        = useMemo(() => resolveStrings(language, stringsOverride), [language, stringsOverride]);
   const controls = useMemo(() => resolveControls(controlsOverride),         [controlsOverride]);
+  const panels   = useMemo(() => resolvePanels(ui, panelsOverride),         [ui, panelsOverride]);
+  const anyPanel = panels.title || panels.info || panels.bottomBar;
 
   const canvasRef = useRef(null);
   const labelsRef = useRef(null);
@@ -123,9 +130,9 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
         </div>
       )}
 
-      {ui !== 'none' && (
+      {anyPanel && (
         <GlobeUI
-          minimal={ui === 'minimal'}
+          panels={panels}
           strings={t}
           controls={controls}
           toggles={toggles}

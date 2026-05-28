@@ -62,3 +62,16 @@ export const DEFAULT_CONTROLS = {
 export function resolveControls(overrides) {
   return overrides ? { ...DEFAULT_CONTROLS, ...overrides } : DEFAULT_CONTROLS;
 }
+
+// Top-level panel visibility. `ui` ('full' | 'minimal' | 'none') sets the
+// baseline; the `panels` prop overrides individual entries on top.
+const UI_PRESETS = {
+  full:    { title: true,  info: true,  bottomBar: true  },
+  minimal: { title: false, info: false, bottomBar: true  },
+  none:    { title: false, info: false, bottomBar: false },
+};
+
+export function resolvePanels(ui = 'full', overrides) {
+  const base = UI_PRESETS[ui] || UI_PRESETS.full;
+  return overrides ? { ...base, ...overrides } : base;
+}

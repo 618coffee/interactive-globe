@@ -1,4 +1,9 @@
 import { useEffect, useState } from 'react';
+import { STRINGS } from './strings.js';
+
+// Always-present English bundle used as the accessibility-label fallback
+// when a host passes an empty string for a button (icon-only mode).
+const A11Y = STRINGS.en;
 
 const Icon = {
   reset:    () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>,
@@ -11,15 +16,24 @@ const Icon = {
   atmos:    () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>,
 };
 
-function Btn({ active, onClick, title, children }) {
+/**
+ * Toolbar button. The icon always renders; the label only renders when
+ * `label` is a non-empty string. `tooltip` is what we put on the title +
+ * aria-label attributes — falls back to the English bundle so icon-only
+ * buttons stay accessible.
+ */
+function ToolBtn({ active, onClick, label, tooltip, children }) {
+  const a11y = label || tooltip;
   return (
     <button
       type="button"
-      className={`ig-btn ${active ? 'ig-active' : ''}`}
+      className={`ig-btn ${active ? 'ig-active' : ''} ${label ? '' : 'ig-icon-only'}`}
       onClick={onClick}
-      title={title}
+      title={a11y}
+      aria-label={a11y}
     >
       {children}
+      {label ? <span>{label}</span> : null}
     </button>
   );
 }
@@ -37,7 +51,7 @@ function useInfoTick(getInfo, interval = 100) {
 }
 
 export function GlobeUI({
-  minimal,
+  panels,
   strings,
   controls,
   toggles,
@@ -53,58 +67,64 @@ export function GlobeUI({
   const showToggle = controls.autoRotate || controls.labels || controls.markers
                    || controls.clouds   || controls.atmosphere;
   const showDivider = showAction && showToggle;
-  const showBar = showAction || showToggle;
+  const showBar = panels.bottomBar && (showAction || showToggle);
 
   return (
     <>
-      {!minimal && (
-        <>
-          <div className="ig-top-left ig-glass">
-            <div className="ig-dot" />
-            <div>
-              <div className="ig-eyebrow">{strings.eyebrow}</div>
-              <div className="ig-title">{strings.title}</div>
-            </div>
+      {panels.title && (
+        <div className="ig-top-left ig-glass">
+          <div className="ig-dot" />
+          <div>
+            <div className="ig-eyebrow">{strings.eyebrow}</div>
+            <div className="ig-title">{strings.title}</div>
           </div>
+        </div>
+      )}
 
-          <div className="ig-top-right ig-glass">
-            <div className="ig-info-row ig-eyebrow ig-spread">
-              <span>{strings.view}</span><span>{info.level}</span>
-            </div>
-            <div className="ig-info-row ig-spread"><span className="ig-dim">{strings.lat}</span><span className="ig-num">{info.lat.toFixed(2)}°</span></div>
-            <div className="ig-info-row ig-spread"><span className="ig-dim">{strings.lon}</span><span className="ig-num">{info.lon.toFixed(2)}°</span></div>
-            <div className="ig-info-row ig-spread"><span className="ig-dim">{strings.distance}</span><span className="ig-num">{info.dist.toFixed(2)}</span></div>
-            <div className="ig-hint">{strings.hintLine1}<br/>{strings.hintLine2}</div>
+      {panels.info && (
+        <div className="ig-top-right ig-glass">
+          <div className="ig-info-row ig-eyebrow ig-spread">
+            <span>{strings.view}</span><span>{info.level}</span>
           </div>
-        </>
+          <div className="ig-info-row ig-spread"><span className="ig-dim">{strings.lat}</span><span className="ig-num">{info.lat.toFixed(2)}°</span></div>
+          <div className="ig-info-row ig-spread"><span className="ig-dim">{strings.lon}</span><span className="ig-num">{info.lon.toFixed(2)}°</span></div>
+          <div className="ig-info-row ig-spread"><span className="ig-dim">{strings.distance}</span><span className="ig-num">{info.dist.toFixed(2)}</span></div>
+          {(strings.hintLine1 || strings.hintLine2) && (
+            <div className="ig-hint">
+              {strings.hintLine1}
+              {strings.hintLine1 && strings.hintLine2 && <br/>}
+              {strings.hintLine2}
+            </div>
+          )}
+        </div>
       )}
 
       {showBar && (
         <div className="ig-bottom ig-glass">
           {controls.reset && (
-            <Btn onClick={onReset} title={strings.reset}><Icon.reset/><span>{strings.reset}</span></Btn>
+            <ToolBtn onClick={onReset} label={strings.reset} tooltip={A11Y.reset}><Icon.reset/></ToolBtn>
           )}
           {controls.zoomIn && (
-            <Btn onClick={onZoomIn} title={strings.zoomIn}><Icon.zoomIn/></Btn>
+            <ToolBtn onClick={onZoomIn} label={strings.zoomIn} tooltip={A11Y.zoomIn}><Icon.zoomIn/></ToolBtn>
           )}
           {controls.zoomOut && (
-            <Btn onClick={onZoomOut} title={strings.zoomOut}><Icon.zoomOut/></Btn>
+            <ToolBtn onClick={onZoomOut} label={strings.zoomOut} tooltip={A11Y.zoomOut}><Icon.zoomOut/></ToolBtn>
           )}
           {showDivider && <span className="ig-divider" />}
           {controls.autoRotate && (
-            <Btn active={toggles.autoRotate}     onClick={() => onToggle('autoRotate')}     title={strings.autoRotate}><Icon.rotate/><span>{strings.autoRotate}</span></Btn>
+            <ToolBtn active={toggles.autoRotate}     onClick={() => onToggle('autoRotate')}     label={strings.autoRotate} tooltip={A11Y.autoRotate}><Icon.rotate/></ToolBtn>
           )}
           {controls.labels && (
-            <Btn active={toggles.showLabels}     onClick={() => onToggle('showLabels')}     title={strings.labels}><Icon.labels/><span>{strings.labels}</span></Btn>
+            <ToolBtn active={toggles.showLabels}     onClick={() => onToggle('showLabels')}     label={strings.labels}     tooltip={A11Y.labels}><Icon.labels/></ToolBtn>
           )}
           {controls.markers && (
-            <Btn active={toggles.showMarkers}    onClick={() => onToggle('showMarkers')}    title={strings.poi}><Icon.poi/><span>{strings.poi}</span></Btn>
+            <ToolBtn active={toggles.showMarkers}    onClick={() => onToggle('showMarkers')}    label={strings.poi}        tooltip={A11Y.poi}><Icon.poi/></ToolBtn>
           )}
           {controls.clouds && (
-            <Btn active={toggles.showClouds}     onClick={() => onToggle('showClouds')}     title={strings.clouds}><Icon.cloud/><span>{strings.clouds}</span></Btn>
+            <ToolBtn active={toggles.showClouds}     onClick={() => onToggle('showClouds')}     label={strings.clouds}     tooltip={A11Y.clouds}><Icon.cloud/></ToolBtn>
           )}
           {controls.atmosphere && (
-            <Btn active={toggles.showAtmosphere} onClick={() => onToggle('showAtmosphere')} title={strings.atmosphere}><Icon.atmos/><span>{strings.atmosphere}</span></Btn>
+            <ToolBtn active={toggles.showAtmosphere} onClick={() => onToggle('showAtmosphere')} label={strings.atmosphere} tooltip={A11Y.atmosphere}><Icon.atmos/></ToolBtn>
           )}
         </div>
       )}

@@ -99,6 +99,19 @@ export interface BottomControlsConfig {
   atmosphere?: boolean;
 }
 
+/**
+ * Top-level panel visibility. Layered on top of the `ui` preset
+ * (`'full' | 'minimal' | 'none'`). Omitted keys inherit from the preset.
+ */
+export interface PanelsConfig {
+  /** Top-left title chip. */
+  title?: boolean;
+  /** Top-right live lat/lon/distance readout. */
+  info?: boolean;
+  /** Bottom button bar (further filtered by `controls`). */
+  bottomBar?: boolean;
+}
+
 // ----------------------------------------------------------------------------
 // Scene class (framework-agnostic)
 // ----------------------------------------------------------------------------
@@ -164,11 +177,19 @@ export interface InteractiveGlobeHandle {
 export interface InteractiveGlobeProps {
   pois?: POI[];
   labels?: LabelItem[];
-  /** `'full'` keeps all chrome, `'minimal'` only the bottom bar, `'none'` strips all UI. */
+  /** Coarse preset: `'full'` keeps all chrome, `'minimal'` only the bottom bar, `'none'` strips all UI. */
   ui?: 'full' | 'minimal' | 'none';
+  /** Fine-grained panel toggles layered on top of `ui`. Omitted keys inherit from the preset. */
+  panels?: PanelsConfig;
   /** Built-in UI language. Default `'zh'`. */
   language?: Language;
-  /** Partial overrides for individual UI strings (merged on top of the language bundle). */
+  /**
+   * Partial overrides for individual UI strings (merged on top of the
+   * language bundle). Pass an empty string for a button label to render
+   * that button **icon-only** — the icon is always present, the SVG
+   * stays the same, and the tooltip falls back to the English bundle
+   * so screen readers still get a meaningful name.
+   */
   strings?: Partial<UIStrings>;
   /** Per-button visibility in the bottom bar. Omitted keys default to `true`. */
   controls?: BottomControlsConfig;
