@@ -1,0 +1,40 @@
+name: CI
+
+# Runs on every push and pull request to main. Distinct from release.yml
+# which only fires on version tags. This catches test regressions before
+# you tag a release.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'react/**'
+      - '.github/workflows/ci.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'react/**'
+      - '.github/workflows/ci.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: react
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: react/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm run test:ci
+
+      - name: Build library
+        run: npm run build

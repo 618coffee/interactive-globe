@@ -118,9 +118,30 @@ const globe = useRef(null);
 cd react
 npm install
 npm run dev          # runs the Vite example app at http://localhost:5173
+npm test             # vitest watch mode
+npm run test:ci      # single run, used by CI + prepublishOnly
 ```
 
 `src/example/App.jsx` demos `flyTo()` and `onPoiClick`.
+
+## Testing
+
+Unit + UI tests live next to the source in `src/lib/__tests__/`. They run
+in jsdom with `GlobeScene` mocked so they're fast and don't need WebGL.
+
+What's covered:
+
+- **`strings.test.js`** — `resolveStrings` / `resolveControls` / `resolvePanels`
+  merge semantics; empty-string preservation for icon-only intent.
+- **`InteractiveGlobe.test.jsx`** — every prop combination from v0.2.0 /
+  v0.3.0: language switching, per-key string overrides, icon-only button
+  mode (including a11y fallback), per-button `controls`, divider collapse
+  rules, `panels` layered on top of `ui` presets, toggle button click
+  behavior, imperative ref API (`flyTo`, `reset`, `zoomIn/Out`,
+  `getInfo`), and lifecycle callbacks (`onReady`, `onLoad`, `onPoiClick`).
+
+Tests run on every push via [.github/workflows/ci.yml](../.github/workflows/ci.yml)
+and gate the release flow (`prepublishOnly` runs `test:ci` before build).
 
 ## Publishing to npm
 

@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- Vitest + React Testing Library suite covering every prop combination
+  introduced in 0.2.0 / 0.3.0 (language, strings overrides, icon-only
+  buttons, `controls` per-button visibility, `panels` layered on `ui`,
+  toggle clicks, imperative ref API, lifecycle callbacks). 52 tests,
+  jsdom, GlobeScene mocked so no WebGL is required.
+- `npm run test:ci` script; `prepublishOnly` now runs tests **before**
+  the library build, so a regression blocks publish.
+- `.github/workflows/ci.yml` runs the suite on every push / PR to main.
+- `.github/workflows/release.yml` runs the suite before publish too,
+  matching the local `prepublishOnly` gate.
+
 ## [0.3.0] - 2026-05-28
 
 ### Added
