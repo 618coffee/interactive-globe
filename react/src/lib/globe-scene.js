@@ -188,12 +188,21 @@ export class GlobeScene {
     dayTex.colorSpace = THREE.SRGBColorSpace;
     [dayTex, specTex, bumpTex, cloudTex].forEach(t => { t.anisotropy = maxAniso; });
 
+    // Oceans look dull at the same exposure because water absorbs more
+    // light than land in the Blue Marble texture. Use the water mask
+    // (specTex — white over water, black over land) as an emissive map
+    // with a deep-blue emissive color, so ocean pixels self-light a bit
+    // and the land/water brightness ratio looks more balanced. Land is
+    // black in the mask, so it gets zero emissive contribution.
     this.earth = new THREE.Mesh(
       new THREE.SphereGeometry(1, 128, 128),
       new THREE.MeshPhongMaterial({
         map: dayTex, specularMap: specTex,
         bumpMap: bumpTex, bumpScale: 0.04,
         specular: new THREE.Color(0x3a4a66), shininess: 22,
+        emissive: new THREE.Color(0x12365c),
+        emissiveMap: specTex,
+        emissiveIntensity: 0.55,
       })
     );
     this.scene.add(this.earth);

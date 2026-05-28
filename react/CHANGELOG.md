@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-05-28
+
+### Changed
+- **Oceans no longer read as near-black at the default exposure.** The
+  Blue Marble texture's water pixels absorb more light than land, so at
+  the same tone-mapping exposure oceans always looked darker than the
+  surrounding continents. Reusing the existing water mask (`specTex`)
+  as an `emissiveMap` with a deep-blue `emissive` color
+  (`0x12365c`, intensity 0.55) gives ocean pixels a small self-light
+  contribution; land pixels are zero in the mask, so continents are
+  unchanged. No new prop, no API surface affected.
+
 ## [0.5.0] - 2026-05-28
 
 ### Added
@@ -149,7 +161,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Hand-written TypeScript declarations (`index.d.ts`).
 - MIT license.
 
-[Unreleased]: https://github.com/618coffee/interactive-globe/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/618coffee/interactive-globe/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/618coffee/interactive-globe/releases/tag/v0.5.1
 [0.5.0]: https://github.com/618coffee/interactive-globe/releases/tag/v0.5.0
 [0.4.0]: https://github.com/618coffee/interactive-globe/releases/tag/v0.4.0
 [0.3.1]: https://github.com/618coffee/interactive-globe/releases/tag/v0.3.1

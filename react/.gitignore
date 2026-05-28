@@ -3,3 +3,5 @@ dist/
 .vite/
 *.log
 inspect-page.png
+before*.png
+after*.png
