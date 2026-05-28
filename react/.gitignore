@@ -2,6 +2,6 @@ node_modules/
 dist/
 .vite/
 *.log
-inspect-page.png
+inspect-page*.png
 before*.png
 after*.png
