@@ -21,6 +21,7 @@ export const STRINGS = {
     poi:         'POI',
     clouds:      '云层',
     atmosphere:  '大气',
+    aurora:      '极光',
   },
   en: {
     eyebrow:     'Interactive Globe',
@@ -40,6 +41,7 @@ export const STRINGS = {
     poi:         'POI',
     clouds:      'Clouds',
     atmosphere:  'Atmosphere',
+    aurora:      'Aurora',
   },
 };
 
@@ -57,6 +59,7 @@ export const DEFAULT_CONTROLS = {
   markers:    true,
   clouds:     true,
   atmosphere: true,
+  aurora:     true,
 };
 
 export function resolveControls(overrides) {

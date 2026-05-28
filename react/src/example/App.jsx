@@ -42,6 +42,7 @@ export default function App() {
   const [btnMarkers,    setBtnMarkers]    = useState(true);
   const [btnClouds,     setBtnClouds]     = useState(true);
   const [btnAtmos,      setBtnAtmos]      = useState(true);
+  const [btnAurora,     setBtnAurora]     = useState(true);
 
   const labels = {
     zh: { title: '配置 · 实时切换', flyTo: '飞往', clicked: '已选 POI', langLabel: '语言',
@@ -51,7 +52,7 @@ export default function App() {
           view_r: '视图', lat_r: '纬度', lon_r: '经度', dist_r: '距离', hint_r: '提示',
           barButtonsLabel: '底栏按钮',
           b_reset: '重置', b_zoom: '缩放', b_auto: '自转', b_labels: '标签',
-          b_poi: 'POI', b_clouds: '云层', b_atmos: '大气' },
+          b_poi: 'POI', b_clouds: '云层', b_atmos: '大气', b_aurora: '极光' },
     en: { title: 'Config · live toggles',  flyTo: 'Fly to', clicked: 'Clicked POI', langLabel: 'Language',
           panelsLabel: 'Panels', iconOnlyLabel: 'Icon-only buttons', autoLabel: 'Auto-rotate',
           title_t: 'Title', info_t: 'Info card', bar_t: 'Bottom bar',
@@ -59,7 +60,7 @@ export default function App() {
           view_r: 'View', lat_r: 'Lat', lon_r: 'Lon', dist_r: 'Distance', hint_r: 'Hint',
           barButtonsLabel: 'Bottom bar buttons',
           b_reset: 'Reset', b_zoom: 'Zoom', b_auto: 'Auto-rotate', b_labels: 'Labels',
-          b_poi: 'POI', b_clouds: 'Clouds', b_atmos: 'Atmosphere' },
+          b_poi: 'POI', b_clouds: 'Clouds', b_atmos: 'Atmosphere', b_aurora: 'Aurora' },
   }[language];
 
   return (
@@ -81,6 +82,7 @@ export default function App() {
           markers:    btnMarkers,
           clouds:     btnClouds,
           atmosphere: btnAtmos,
+          aurora:     btnAurora,
         }}
         strings={iconOnly ? ICON_ONLY_OVERRIDES : undefined}
         onPoiClick={(poi) => setLastClick(poi)}
@@ -122,6 +124,7 @@ export default function App() {
           <Toggle label={labels.b_poi}    value={btnMarkers}    onChange={setBtnMarkers} />
           <Toggle label={labels.b_clouds} value={btnClouds}     onChange={setBtnClouds} />
           <Toggle label={labels.b_atmos}  value={btnAtmos}      onChange={setBtnAtmos} />
+          <Toggle label={labels.b_aurora} value={btnAurora}     onChange={setBtnAurora} />
         </div>
 
         <Toggle label={labels.iconOnlyLabel} value={iconOnly}   onChange={setIconOnly} />

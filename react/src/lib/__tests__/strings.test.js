@@ -24,12 +24,14 @@ describe('strings module', () => {
       expect(STRINGS.zh.reset).toBe('重置');
       expect(STRINGS.zh.autoRotate).toBe('自转');
       expect(STRINGS.zh.clouds).toBe('云层');
+      expect(STRINGS.zh.aurora).toBe('极光');
     });
 
     it('en values are English (sanity check on a few)', () => {
       expect(STRINGS.en.reset).toBe('Reset');
       expect(STRINGS.en.autoRotate).toBe('Auto-rotate');
       expect(STRINGS.en.clouds).toBe('Clouds');
+      expect(STRINGS.en.aurora).toBe('Aurora');
     });
   });
 

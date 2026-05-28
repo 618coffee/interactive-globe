@@ -100,6 +100,7 @@ export class GlobeScene {
       autoRotate: true,
       showClouds: true,
       showAtmosphere: true,
+      showAurora: true,
       showLabels: true,
       showMarkers: true,
       exposure: 1.4,
@@ -239,6 +240,112 @@ export class GlobeScene {
       })
     );
     this.scene.add(this.atmosphere);
+
+    // ---------- Aurora -----------------------------------------------
+    // Real auroras hug the auroral oval — roughly 65°–78° magnetic
+    // latitude around each pole. We draw two thin annular bands of a
+    // sphere shell just above the surface and run an fBm-driven shader
+    // that simulates flowing curtain patterns. Green dominates (oxygen
+    // at ~100 km), with a subtle warm-red tint near the high-altitude
+    // edge of the band (oxygen at ~300 km).
+    this.auroraMat = new THREE.ShaderMaterial({
+      uniforms: {
+        uTime:        { value: 0 },
+        uColorLow:    { value: new THREE.Color(0x3affb0) }, // oxygen green
+        uColorHigh:   { value: new THREE.Color(0xff6da8) }, // upper-altitude pink-red
+        uIntensity:   { value: 1.4 },
+      },
+      vertexShader: `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }`,
+      fragmentShader: `
+        varying vec2 vUv;
+        uniform float uTime;
+        uniform vec3  uColorLow;
+        uniform vec3  uColorHigh;
+        uniform float uIntensity;
+
+        float hash(vec2 p) {
+          return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+        }
+        float noise(vec2 p) {
+          vec2 i = floor(p);
+          vec2 f = fract(p);
+          vec2 u = f * f * (3.0 - 2.0 * f);
+          return mix(
+            mix(hash(i + vec2(0.0, 0.0)), hash(i + vec2(1.0, 0.0)), u.x),
+            mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x),
+            u.y);
+        }
+        float fbm(vec2 p) {
+          float v = 0.0;
+          float a = 0.5;
+          for (int i = 0; i < 4; i++) {
+            v += a * noise(p);
+            p *= 2.0;
+            a *= 0.5;
+          }
+          return v;
+        }
+
+        void main() {
+          // vUv.x runs around the longitude band, vUv.y across its width.
+          float u = vUv.x;
+          float v = vUv.y;
+          float t = uTime * 0.08;
+
+          // Two fBm layers: slow-drifting broad shape + faster fine
+          // detail. Output is the impression of curtains shifting around
+          // the auroral oval.
+          float pattern = fbm(vec2(u * 14.0 + t,        v * 3.0)) * 0.75
+                        + fbm(vec2(u * 28.0 - t * 1.4,  v * 7.0 + t * 0.6)) * 0.25;
+          // Lift contrast but keep softer edges than a binary mask.
+          pattern = smoothstep(0.25, 0.75, pattern);
+
+          // Width envelope: sin gives a smooth bulge with zero at both
+          // edges. pow widens the peak so the band is bright in the
+          // middle and only fades very close to the edges.
+          float band = pow(sin(v * 3.14159265), 1.2);
+
+          // Color drifts from green at the equatorward (v=0) edge to a
+          // warm pink-red at the poleward (v=1) edge.
+          vec3 color = mix(uColorLow, uColorHigh, pow(v, 1.2));
+
+          // AdditiveBlending uses src.rgb * src.a + dest. Output raw
+          // color and use alpha as the gate — avoids the alpha²
+          // dimming you'd get from pre-multiplying.
+          float alpha = pattern * band * uIntensity;
+          gl_FragColor = vec4(color, alpha);
+        }`,
+      transparent: true,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    });
+
+    // North auroral oval: 65°N–78°N. SphereGeometry phi runs from 0
+    // (top) to π (bottom), so phi for latitude L (N) is (90° − L).
+    const PHI = (latDeg) => THREE.MathUtils.degToRad(90 - latDeg);
+    const NORTH_HI = PHI(78), NORTH_LO = PHI(65);
+    const SOUTH_HI = PHI(-65), SOUTH_LO = PHI(-78);
+    this.auroraNorth = new THREE.Mesh(
+      new THREE.SphereGeometry(1.022, 96, 8,
+        0, Math.PI * 2,
+        NORTH_HI,  NORTH_LO - NORTH_HI),
+      this.auroraMat,
+    );
+    this.auroraSouth = new THREE.Mesh(
+      new THREE.SphereGeometry(1.022, 96, 8,
+        0, Math.PI * 2,
+        SOUTH_HI,  SOUTH_LO - SOUTH_HI),
+      this.auroraMat,
+    );
+    // Children of the earth so they ride along if it ever rotates.
+    this.earth.add(this.auroraNorth);
+    this.earth.add(this.auroraSouth);
 
     this._textures = { dayTex, specTex, bumpTex, cloudTex };
   }
@@ -426,9 +533,11 @@ export class GlobeScene {
   // -------------------------------------------------------------- internals
 
   _applyVisibility() {
-    this.clouds.visible     = this.options.showClouds;
-    this.markers.visible    = this.options.showMarkers;
-    this.atmosphere.visible = this.options.showAtmosphere;
+    this.clouds.visible      = this.options.showClouds;
+    this.markers.visible     = this.options.showMarkers;
+    this.atmosphere.visible  = this.options.showAtmosphere;
+    this.auroraNorth.visible = this.options.showAurora;
+    this.auroraSouth.visible = this.options.showAurora;
     // labels handled per-frame via showLabels
   }
 
@@ -467,6 +576,9 @@ export class GlobeScene {
     // Sun tracks the camera so the visible hemisphere stays lit.
     this._sunOff.copy(this.camera.position).applyAxisAngle(this._yAxis, 0.35);
     this.sun.position.copy(this._sunOff);
+
+    // Drive the aurora curtain animation.
+    this.auroraMat.uniforms.uTime.value = t;
 
     if (this.options.showMarkers) {
       for (const m of this.markerMeshes) {

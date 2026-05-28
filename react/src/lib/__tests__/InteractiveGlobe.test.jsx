@@ -132,17 +132,18 @@ describe('strings prop', () => {
 describe('controls prop', () => {
   it('shows every button by default', async () => {
     await renderAndLoad(<InteractiveGlobe />);
-    // 8 buttons: reset, zoomIn, zoomOut, autoRotate, labels, markers, clouds, atmosphere
+    // 9 buttons: reset, zoomIn, zoomOut, autoRotate, labels, markers, clouds, atmosphere, aurora
     const buttons = document.querySelectorAll('.ig-bottom .ig-btn');
-    expect(buttons.length).toBe(8);
+    expect(buttons.length).toBe(9);
   });
 
   it('hides individual buttons specified as false', async () => {
     await renderAndLoad(
-      <InteractiveGlobe controls={{ atmosphere: false, clouds: false }} />,
+      <InteractiveGlobe controls={{ atmosphere: false, clouds: false, aurora: false }} />,
     );
     expect(screen.queryByText('大气')).not.toBeInTheDocument();
     expect(screen.queryByText('云层')).not.toBeInTheDocument();
+    expect(screen.queryByText('极光')).not.toBeInTheDocument();
     // The rest still render
     expect(screen.getByText('重置')).toBeInTheDocument();
     expect(screen.getByText('自转')).toBeInTheDocument();
@@ -160,18 +161,35 @@ describe('controls prop', () => {
   it('collapses the divider when only action buttons remain', async () => {
     const { container } = await renderAndLoad(
       <InteractiveGlobe controls={{
-        autoRotate: false, labels: false, markers: false, clouds: false, atmosphere: false,
+        autoRotate: false, labels: false, markers: false,
+        clouds: false, atmosphere: false, aurora: false,
       }} />,
     );
     expect(container.querySelector('.ig-divider')).toBeNull();
     expect(screen.getByText('重置')).toBeInTheDocument();
   });
 
+  it('clicking the aurora toggle reverses the showAurora option', async () => {
+    const user = userEvent.setup();
+    await renderAndLoad(<InteractiveGlobe />);
+    const scene = sceneInstances[0];
+    expect(screen.getByText('极光')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: '极光' }));
+    const last = scene.calls.setOptions.filter(p => 'showAurora' in p).pop();
+    expect(last.showAurora).toBe(false);
+  });
+
+  it('showAurora=false is forwarded to the scene constructor', async () => {
+    await renderAndLoad(<InteractiveGlobe showAurora={false} />);
+    expect(sceneInstances[0].options.showAurora).toBe(false);
+  });
+
   it('unmounts the whole bottom bar when every control is false', async () => {
     const { container } = await renderAndLoad(
       <InteractiveGlobe controls={{
         reset: false, zoomIn: false, zoomOut: false,
-        autoRotate: false, labels: false, markers: false, clouds: false, atmosphere: false,
+        autoRotate: false, labels: false, markers: false,
+        clouds: false, atmosphere: false, aurora: false,
       }} />,
     );
     expect(container.querySelector('.ig-bottom')).toBeNull();

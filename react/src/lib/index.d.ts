@@ -78,6 +78,7 @@ export interface UIStrings {
   poi: string;
   clouds: string;
   atmosphere: string;
+  aurora: string;
 }
 
 export type Language = 'zh' | 'en';
@@ -103,6 +104,8 @@ export interface BottomControlsConfig {
   markers?: boolean;
   clouds?: boolean;
   atmosphere?: boolean;
+  /** Animated polar-cap aurora rings (65°–78° N/S). */
+  aurora?: boolean;
 }
 
 /**
@@ -146,6 +149,8 @@ export interface GlobeSceneOptions {
   autoRotate?: boolean;
   showClouds?: boolean;
   showAtmosphere?: boolean;
+  /** Polar-cap aurora rings (animated curtain shader at 65°–78° N/S). */
+  showAurora?: boolean;
   showLabels?: boolean;
   showMarkers?: boolean;
   /** Renderer tone-mapping exposure (brightness multiplier). Default 1.4. */
@@ -222,6 +227,8 @@ export interface InteractiveGlobeProps {
   autoRotate?: boolean;
   showClouds?: boolean;
   showAtmosphere?: boolean;
+  /** Polar-cap aurora rings (animated curtain shader at 65°–78° N/S). */
+  showAurora?: boolean;
   showLabels?: boolean;
   showMarkers?: boolean;
   /** Renderer tone-mapping exposure (brightness multiplier). Default 1.4. */

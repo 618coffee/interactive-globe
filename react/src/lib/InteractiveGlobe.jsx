@@ -28,6 +28,7 @@ import './styles.css';
  *   autoRotate        boolean                                       default: true
  *   showClouds        boolean                                       default: true
  *   showAtmosphere    boolean                                       default: true
+ *   showAurora        boolean (polar auroral oval rings)            default: true
  *   showLabels        boolean                                       default: true
  *   showMarkers       boolean                                       default: true
  *   exposure          number (renderer tone-mapping exposure)       default: 1.4
@@ -51,6 +52,7 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
     autoRotate     = true,
     showClouds     = true,
     showAtmosphere = true,
+    showAurora     = true,
     showLabels     = true,
     showMarkers    = true,
     exposure       = 1.4,
@@ -72,7 +74,7 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
   const labelsRef = useRef(null);
   const sceneRef  = useRef(null);
   const [toggles, setToggles] = useState({
-    autoRotate, showClouds, showAtmosphere, showLabels, showMarkers,
+    autoRotate, showClouds, showAtmosphere, showAurora, showLabels, showMarkers,
   });
   const [loaded, setLoaded] = useState(false);
 
@@ -80,7 +82,7 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
   useEffect(() => {
     const sceneOpts = {
       pois, labels,
-      autoRotate, showClouds, showAtmosphere, showLabels, showMarkers,
+      autoRotate, showClouds, showAtmosphere, showAurora, showLabels, showMarkers,
       exposure,
       onReady: (api) => { if (onReady) onReady(api); },
       onLoad:  () => { setLoaded(true); if (onLoad) onLoad(); },
@@ -100,6 +102,7 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
   useEffect(() => { sceneRef.current?.setOptions({ autoRotate: toggles.autoRotate }); }, [toggles.autoRotate]);
   useEffect(() => { sceneRef.current?.setOptions({ showClouds: toggles.showClouds }); }, [toggles.showClouds]);
   useEffect(() => { sceneRef.current?.setOptions({ showAtmosphere: toggles.showAtmosphere }); }, [toggles.showAtmosphere]);
+  useEffect(() => { sceneRef.current?.setOptions({ showAurora:     toggles.showAurora }); },     [toggles.showAurora]);
   useEffect(() => { sceneRef.current?.setOptions({ showLabels: toggles.showLabels }); }, [toggles.showLabels]);
   useEffect(() => { sceneRef.current?.setOptions({ showMarkers: toggles.showMarkers }); }, [toggles.showMarkers]);
 
@@ -107,6 +110,7 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
   useEffect(() => { setToggles(s => ({ ...s, autoRotate })); },     [autoRotate]);
   useEffect(() => { setToggles(s => ({ ...s, showClouds })); },     [showClouds]);
   useEffect(() => { setToggles(s => ({ ...s, showAtmosphere })); }, [showAtmosphere]);
+  useEffect(() => { setToggles(s => ({ ...s, showAurora })); },     [showAurora]);
   useEffect(() => { setToggles(s => ({ ...s, showLabels })); },     [showLabels]);
   useEffect(() => { setToggles(s => ({ ...s, showMarkers })); },    [showMarkers]);
 

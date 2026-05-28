@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-05-28
+
+### Added
+- **Polar aurora rings.** Two annular bands of sphere geometry hover
+  just above the surface at **65°–78° N and S** (the real auroral oval),
+  driven by a custom GLSL shader: two-octave fBm noise sharpened into
+  curtain-like vertical streaks, drifting around the pole by `uTime`.
+  Vertical color drift from oxygen-green (`0x3affb0`) at the
+  equatorward edge to a warm pink-red (`0xff6da8`) at the poleward
+  edge. Sin-shaped width envelope so the band fades smoothly into the
+  sky on both sides. Additive blending.
+- **`showAurora` prop** — boolean, default `true`. Aurora visibility is
+  decoupled from `showAtmosphere`; flipping the atmosphere off no
+  longer also hides the aurora.
+- **`controls.aurora`** — adds a dedicated `极光 / Aurora` button to the
+  bottom bar with a curtain-shaped icon. Same rules as the other
+  per-button keys: omitted = `true`, hide entirely with
+  `controls={{ aurora: false }}`.
+- **`UIStrings.aurora`** in both `zh` ("极光") and `en` ("Aurora")
+  bundles, so the new button picks up the chosen language.
+
+### Notes
+- 2 new tests: clicking the aurora toggle forwards
+  `setOptions({ showAurora: false })` into the scene, and
+  `showAurora={false}` is reflected on the scene constructor options.
+  67 tests total.
+- Default button count is now 9 (existing "all buttons" assertion
+  updated accordingly).
+- Example app exposes the new toggle alongside the other six
+  bottom-bar buttons.
+
 ## [0.5.1] - 2026-05-28
 
 ### Changed
@@ -161,7 +192,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Hand-written TypeScript declarations (`index.d.ts`).
 - MIT license.
 
-[Unreleased]: https://github.com/618coffee/interactive-globe/compare/v0.5.1...HEAD
+[Unreleased]: https://github.com/618coffee/interactive-globe/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/618coffee/interactive-globe/releases/tag/v0.6.0
 [0.5.1]: https://github.com/618coffee/interactive-globe/releases/tag/v0.5.1
 [0.5.0]: https://github.com/618coffee/interactive-globe/releases/tag/v0.5.0
 [0.4.0]: https://github.com/618coffee/interactive-globe/releases/tag/v0.4.0

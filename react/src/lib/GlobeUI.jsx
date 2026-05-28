@@ -14,6 +14,7 @@ const Icon = {
   poi:      () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 21s-7-7.5-7-12a7 7 0 1 1 14 0c0 4.5-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>,
   cloud:    () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M7 18a5 5 0 1 1 .5-9.97A6 6 0 0 1 19 11a4 4 0 0 1 0 8H7z"/></svg>,
   atmos:    () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>,
+  aurora:   () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M5 4c-1.4 5-1.4 11 0 16"/><path d="M12 3c-1.4 5.5-1.4 12 0 18"/><path d="M19 4c-1.4 5-1.4 11 0 16"/></svg>,
 };
 
 /**
@@ -66,7 +67,7 @@ export function GlobeUI({
 
   const showAction = controls.reset || controls.zoomIn || controls.zoomOut;
   const showToggle = controls.autoRotate || controls.labels || controls.markers
-                   || controls.clouds   || controls.atmosphere;
+                   || controls.clouds   || controls.atmosphere || controls.aurora;
   const showDivider = showAction && showToggle;
   const showBar = panels.bottomBar && (showAction || showToggle);
 
@@ -138,6 +139,9 @@ export function GlobeUI({
           )}
           {controls.atmosphere && (
             <ToolBtn active={toggles.showAtmosphere} onClick={() => onToggle('showAtmosphere')} label={strings.atmosphere} tooltip={A11Y.atmosphere}><Icon.atmos/></ToolBtn>
+          )}
+          {controls.aurora && (
+            <ToolBtn active={toggles.showAurora} onClick={() => onToggle('showAurora')} label={strings.aurora} tooltip={A11Y.aurora}><Icon.aurora/></ToolBtn>
           )}
         </div>
       )}
