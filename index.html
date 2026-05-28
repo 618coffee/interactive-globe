@@ -256,7 +256,9 @@
     // ============================================================
     // Earth + Clouds + Atmosphere
     // ============================================================
-    const TEX_BASE = 'https://threejs.org/examples/textures/planets/';
+    // 8K NASA Blue Marble (~4x the texel density of the 2K set)
+    const GLOBE_BASE = 'https://unpkg.com/three-globe/example/img/';
+    const TJS_BASE   = 'https://threejs.org/examples/textures/planets/';
     const manager = new THREE.LoadingManager(() => {
       loaderEl.style.opacity = '0';
       setTimeout(() => loaderEl.remove(), 600);
@@ -264,29 +266,30 @@
     const loader = new THREE.TextureLoader(manager);
     loader.crossOrigin = 'anonymous';
 
-    const dayTex    = loader.load(TEX_BASE + 'earth_atmos_2048.jpg');
-    const specTex   = loader.load(TEX_BASE + 'earth_specular_2048.jpg');
-    const normalTex = loader.load(TEX_BASE + 'earth_normal_2048.jpg');
-    const cloudTex  = loader.load(TEX_BASE + 'earth_clouds_1024.png');
+    const maxAniso  = renderer.capabilities.getMaxAnisotropy();
+    const dayTex    = loader.load(GLOBE_BASE + 'earth-blue-marble.jpg'); // 8192x4096
+    const specTex   = loader.load(GLOBE_BASE + 'earth-water.png');       // 8192x4096
+    const bumpTex   = loader.load(GLOBE_BASE + 'earth-topology.png');    // 8192x4096
+    const cloudTex  = loader.load(TJS_BASE + 'earth_clouds_1024.png');
     dayTex.colorSpace = THREE.SRGBColorSpace;
-    dayTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    [dayTex, specTex, bumpTex, cloudTex].forEach(t => { t.anisotropy = maxAniso; });
 
-    const earthGeo = new THREE.SphereGeometry(1, 96, 96);
+    const earthGeo = new THREE.SphereGeometry(1, 128, 128);
     const earthMat = new THREE.MeshPhongMaterial({
       map: dayTex,
       specularMap: specTex,
-      normalMap: normalTex,
-      normalScale: new THREE.Vector2(0.7, 0.7),
-      specular: new THREE.Color(0x2a3a55),
-      shininess: 18
+      bumpMap: bumpTex,
+      bumpScale: 0.04,
+      specular: new THREE.Color(0x3a4a66),
+      shininess: 22
     });
     const earth = new THREE.Mesh(earthGeo, earthMat);
     scene.add(earth);
 
     const cloudsMat = new THREE.MeshLambertMaterial({
-      map: cloudTex, transparent: true, opacity: 0.55, depthWrite: false
+      map: cloudTex, transparent: true, opacity: 0.5, depthWrite: false
     });
-    const clouds = new THREE.Mesh(new THREE.SphereGeometry(1.012, 96, 96), cloudsMat);
+    const clouds = new THREE.Mesh(new THREE.SphereGeometry(1.012, 128, 128), cloudsMat);
     scene.add(clouds);
 
     const atmosphereMat = new THREE.ShaderMaterial({
