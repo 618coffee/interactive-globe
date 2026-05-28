@@ -8,7 +8,7 @@ Full-screen interactive 3D Earth as a drop-in React component. Three.js renders 
 npm install @618coffee/interactive-globe three
 ```
 
-`react`, `react-dom`, and `three` are peer dependencies — the host project provides them.
+`react`, `react-dom`, and `three` are peer dependencies — the host project provides them. TypeScript declarations ship in the package; no `@types/...` install needed.
 
 ## Use it
 
@@ -90,17 +90,34 @@ npm run dev          # runs the Vite example app at http://localhost:5173
 
 ## Publishing to npm
 
-The package is set up to publish from `react/dist/` (built by Vite library mode), with `react`, `react-dom`, and `three` as peer dependencies.
+The package builds from `react/src/lib/` into `react/dist/` via Vite library mode. `react`, `react-dom`, and `three` stay external as peer dependencies.
+
+### Automated (GitHub Actions)
+
+Push a version tag and CI handles the rest:
 
 ```pwsh
 cd react
-npm run build              # emits dist/index.{mjs,cjs} + dist/styles.css
+npm version patch          # bumps package.json + commits + creates tag
+git push --follow-tags     # triggers .github/workflows/release.yml
+```
+
+The workflow installs deps, runs `npm run build`, verifies the tarball, and publishes with [npm provenance](https://docs.npmjs.com/generating-provenance-statements) (signed attestation linking the package to this exact commit).
+
+One-time setup: add an `NPM_TOKEN` secret to the GitHub repo
+(Settings → Secrets and variables → Actions → New repository secret).
+Generate the token at https://www.npmjs.com/settings/<your-account>/tokens with type **Automation**.
+
+### Manual
+
+```pwsh
+cd react
+npm run build              # emits dist/index.{mjs,cjs,d.ts} + dist/styles.css
 npm pack --dry-run         # lists what would be uploaded
 npm login                  # one-time
-npm version patch          # or minor / major — tags the commit
 npm publish                # publishConfig.access=public is already set
 ```
 
-The `prepublishOnly` script runs `npm run build` automatically before publish, so `dist/` is always fresh.
+The `prepublishOnly` script runs `npm run build` automatically, so `dist/` is always fresh.
 
 **Publish is effectively irreversible.** You can't unpublish after 72 hours, and the `name@version` is permanently reserved. Use `npm pack --dry-run` to verify the tarball contents first.
