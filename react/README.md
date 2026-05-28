@@ -1,34 +1,20 @@
-# interactive-globe-react
+# @618coffee/interactive-globe
 
-Reusable React component for the full-screen interactive 3D Earth from the parent repo.
+Full-screen interactive 3D Earth as a drop-in React component. Three.js renders the surface from real Blue Marble textures (8K), with animated POI markers, LOD geographic labels, and a dark glass-morphism control bar.
 
-## Run the example
-
-```pwsh
-cd react
-npm install
-npm run dev
-```
-
-Opens http://localhost:5173 with the demo (`src/example/App.jsx`).
-
-## Use in another project
-
-Two ways to consume it.
-
-### A. Local file install (recommended for personal projects)
-
-From your host React project, install this package by path:
+## Install
 
 ```pwsh
-npm install file:../path/to/interactive-globe/react
+npm install @618coffee/interactive-globe three
 ```
 
-Then in your code:
+`react`, `react-dom`, and `three` are peer dependencies — the host project provides them.
+
+## Use it
 
 ```jsx
-import { InteractiveGlobe } from 'interactive-globe-react';
-import 'interactive-globe-react/styles.css';
+import { InteractiveGlobe } from '@618coffee/interactive-globe';
+import '@618coffee/interactive-globe/styles.css';
 
 export default function Page() {
   return (
@@ -39,16 +25,7 @@ export default function Page() {
 }
 ```
 
-### B. Copy `src/lib/` into your repo
-
-Drop the `react/src/lib/` directory into your project's `src/` and import the same way:
-
-```jsx
-import { InteractiveGlobe } from './lib/index.js';
-import './lib/styles.css';
-```
-
-You still need `three`, `react`, and `react-dom` in your `package.json`.
+The component fills its parent — wrap it in something with an explicit width and height.
 
 ## Props
 
@@ -95,6 +72,35 @@ const globe = useRef(null);
 
 ## Notes
 
-- Sizing comes from the wrapping element. Put `<InteractiveGlobe />` inside something with explicit `width` and `height`.
-- The component opens a WebGL context, a render loop, and DOM nodes inside its wrapper. On unmount it disposes all of them cleanly.
-- Default textures load from `unpkg.com` (8K Blue Marble) and `threejs.org` (clouds). For offline/self-hosted use, copy those assets and pass URLs via the `textures` prop.
+- The component opens a WebGL context, a render loop, and DOM nodes inside its wrapper. On unmount it disposes all of them cleanly (safe inside React StrictMode and routed pages).
+- Default textures load from `unpkg.com` (8K Blue Marble) and `threejs.org` (clouds). For offline / self-hosted use, copy those assets and pass URLs via the `textures` prop.
+- Sizing is tracked with `ResizeObserver`, so the canvas reflows correctly when its container resizes (not just on window resize).
+
+---
+
+## Development
+
+```pwsh
+cd react
+npm install
+npm run dev          # runs the Vite example app at http://localhost:5173
+```
+
+`src/example/App.jsx` demos `flyTo()` and `onPoiClick`.
+
+## Publishing to npm
+
+The package is set up to publish from `react/dist/` (built by Vite library mode), with `react`, `react-dom`, and `three` as peer dependencies.
+
+```pwsh
+cd react
+npm run build              # emits dist/index.{mjs,cjs} + dist/styles.css
+npm pack --dry-run         # lists what would be uploaded
+npm login                  # one-time
+npm version patch          # or minor / major — tags the commit
+npm publish                # publishConfig.access=public is already set
+```
+
+The `prepublishOnly` script runs `npm run build` automatically before publish, so `dist/` is always fresh.
+
+**Publish is effectively irreversible.** You can't unpublish after 72 hours, and the `name@version` is permanently reserved. Use `npm pack --dry-run` to verify the tarball contents first.
