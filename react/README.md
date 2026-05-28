@@ -69,7 +69,7 @@ All optional.
 | `panels`         | `{ title?, info?, bottomBar? }`       |                        | Fine-grained overrides on top of `ui`. Omitted keys inherit from the preset. |
 | `language`       | `'zh' \| 'en'`                        | `'zh'`                 | Built-in UI language. |
 | `strings`        | `Partial<UIStrings>`                  |                        | Override specific UI strings on top of the language bundle. Pass an empty string for a button label to render it **icon-only** (icon always shows; tooltip falls back to English). |
-| `controls`       | `{ reset, zoomIn, zoomOut, autoRotate, labels, markers, clouds, atmosphere }` (all booleans) | all `true` | Per-button visibility in the bottom bar. Omitted keys default to `true`. Hiding a button does **not** change scene state — pair with `showLabels` / `showClouds` etc. if you want the underlying layer off too. |
+| `controls`       | `{ reset, zoom, zoomIn, zoomOut, autoRotate, labels, markers, clouds, atmosphere }` (all booleans) | all `true` | Per-button visibility in the bottom bar. Omitted keys default to `true`. `zoom` is a convenience that toggles both `zoomIn` and `zoomOut` at once; explicit `zoomIn` / `zoomOut` still win. Hiding a button does **not** change scene state — pair with `showLabels` / `showClouds` etc. if you want the underlying layer off too. |
 | `infoCard`       | `{ view, lat, lon, distance, hint }` (all booleans) | all `true` | Per-row visibility inside the top-right info card. Hiding every row collapses the card entirely (same effect as `panels.info: false`). |
 | `autoRotate`     | `boolean`                             | `true`                 | |
 | `showClouds`     | `boolean`                             | `true`                 | |

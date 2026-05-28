@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-05-28
+
+### Added
+- **`controls.zoom` convenience key** — sets both `zoomIn` and `zoomOut`
+  in one shot, since the two almost always travel together. Explicit
+  `zoomIn` / `zoomOut` still win when present, so e.g.
+  `controls={{ zoom: false, zoomIn: true }}` keeps only the `+` button.
+- Example app now has a **"底栏按钮 / Bottom bar buttons"** group with
+  seven checkboxes — reset, zoom (combined), auto-rotate, labels, POI,
+  clouds, atmosphere — so every bottom-bar button is live-toggleable.
+  (Per-button visibility was always supported via `controls`; this just
+  surfaces it in the demo.)
+
+### Notes
+- 3 new tests around `controls.zoom`: convenience-toggles-both, explicit
+  zoomIn/zoomOut precedence, and end-to-end DOM assertion that both
+  buttons disappear when `controls={{ zoom: false }}`. 65 tests total.
+- All-controls-false still collapses the whole bottom bar (existing
+  behavior, covered by an existing test).
+
 ## [0.4.0] - 2026-05-28
 
 ### Added
@@ -129,7 +149,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Hand-written TypeScript declarations (`index.d.ts`).
 - MIT license.
 
-[Unreleased]: https://github.com/618coffee/interactive-globe/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/618coffee/interactive-globe/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/618coffee/interactive-globe/releases/tag/v0.5.0
 [0.4.0]: https://github.com/618coffee/interactive-globe/releases/tag/v0.4.0
 [0.3.1]: https://github.com/618coffee/interactive-globe/releases/tag/v0.3.1
 [0.3.0]: https://github.com/618coffee/interactive-globe/releases/tag/v0.3.0

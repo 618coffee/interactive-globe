@@ -176,6 +176,16 @@ describe('controls prop', () => {
     );
     expect(container.querySelector('.ig-bottom')).toBeNull();
   });
+
+  it('controls.zoom: false hides both + and − buttons via the convenience key', async () => {
+    await renderAndLoad(<InteractiveGlobe controls={{ zoom: false }} />);
+    // zoomIn / zoomOut buttons have no text label, just the title attr
+    expect(screen.queryByRole('button', { name: '放大' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '缩小' })).not.toBeInTheDocument();
+    // reset and the toggle buttons still render
+    expect(screen.getByText('重置')).toBeInTheDocument();
+    expect(screen.getByText('自转')).toBeInTheDocument();
+  });
 });
 
 // ==================================================================

@@ -60,7 +60,16 @@ export const DEFAULT_CONTROLS = {
 };
 
 export function resolveControls(overrides) {
-  return overrides ? { ...DEFAULT_CONTROLS, ...overrides } : DEFAULT_CONTROLS;
+  if (!overrides) return DEFAULT_CONTROLS;
+  const merged = { ...DEFAULT_CONTROLS, ...overrides };
+  // Convenience: `controls.zoom` toggles both zoomIn and zoomOut at once
+  // (since they almost always travel as a pair). Explicit zoomIn/zoomOut
+  // still win — pass `{ zoom: false, zoomIn: true }` to keep only +.
+  if ('zoom' in overrides) {
+    if (!('zoomIn'  in overrides)) merged.zoomIn  = overrides.zoom;
+    if (!('zoomOut' in overrides)) merged.zoomOut = overrides.zoom;
+  }
+  return merged;
 }
 
 // Per-row visibility inside the top-right info card. Omitted keys

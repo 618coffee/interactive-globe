@@ -75,6 +75,21 @@ describe('strings module', () => {
       expect(result.reset).toBe(true);
       expect(result.autoRotate).toBe(true);
     });
+
+    it('controls.zoom is a convenience that toggles both zoomIn and zoomOut', () => {
+      const result = resolveControls({ zoom: false });
+      expect(result.zoomIn).toBe(false);
+      expect(result.zoomOut).toBe(false);
+      // unrelated keys untouched
+      expect(result.reset).toBe(true);
+      expect(result.autoRotate).toBe(true);
+    });
+
+    it('explicit zoomIn / zoomOut win over controls.zoom (more specific wins)', () => {
+      const result = resolveControls({ zoom: false, zoomIn: true });
+      expect(result.zoomIn).toBe(true);   // explicit override
+      expect(result.zoomOut).toBe(false); // inherited from zoom
+    });
   });
 
   describe('resolveInfoCard', () => {

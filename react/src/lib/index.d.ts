@@ -90,6 +90,12 @@ export type Language = 'zh' | 'en';
  */
 export interface BottomControlsConfig {
   reset?: boolean;
+  /**
+   * Convenience: toggles both `zoomIn` and `zoomOut` at once. Explicit
+   * `zoomIn` / `zoomOut` keys still win — pass
+   * `{ zoom: false, zoomIn: true }` to keep only the `+` button.
+   */
+  zoom?: boolean;
   zoomIn?: boolean;
   zoomOut?: boolean;
   autoRotate?: boolean;
