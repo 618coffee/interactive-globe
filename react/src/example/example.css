@@ -7,8 +7,9 @@ body { font-family: ui-sans-serif, system-ui, "PingFang SC", "Microsoft YaHei", 
   position: absolute;
   top: 96px;
   left: 16px;
-  width: 200px;
-  padding: 12px;
+  width: 240px;
+  padding: 14px;
+  border-radius: 16px;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -19,8 +20,47 @@ body { font-family: ui-sans-serif, system-ui, "PingFang SC", "Microsoft YaHei", 
   letter-spacing: 0.3em;
   color: rgba(165, 243, 252, 0.7);
   text-transform: uppercase;
+  margin: 8px 0 2px;
+}
+.side-title:first-child { margin-top: 0; }
+.side-title-sm {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: rgba(165, 243, 252, 0.55);
+  text-transform: uppercase;
   margin: 4px 0 2px;
 }
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  padding: 5px 2px;
+  cursor: pointer;
+}
+.row span { opacity: 0.85; }
+.row select {
+  background: rgba(255,255,255,0.06);
+  color: rgba(225, 238, 255, 0.95);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 6px;
+  padding: 3px 6px;
+  font: inherit;
+  font-size: 12px;
+}
+.row input[type=checkbox] {
+  accent-color: rgb(124, 230, 255);
+  width: 14px; height: 14px;
+}
+
+.row-group {
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px;
+  padding: 6px 8px;
+  margin: 6px 0 4px;
+}
+
 .side-btn {
   background: transparent;
   border: 1px solid rgba(255,255,255,0.08);

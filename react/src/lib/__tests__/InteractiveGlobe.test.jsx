@@ -371,6 +371,23 @@ describe('initial scene construction', () => {
     expect(sceneInstances[0].options.pois).toBe(pois);
     expect(sceneInstances[0].options.labels).toBe(labels);
   });
+
+  // Regression: 0.1.0 - 0.3.0 silently passed `textures: undefined` into
+  // GlobeScene, which wiped DEFAULT_TEXTURES via spread and crashed
+  // _initEarth with "Cannot read properties of undefined (reading 'day')".
+  // Tests didn't catch it because GlobeScene was mocked. We now guard:
+  // when the prop is omitted, textures must NOT be present in the scene
+  // options (so GlobeScene's own default wins).
+  it('omits textures from scene options when the prop is not passed', async () => {
+    await renderAndLoad(<InteractiveGlobe />);
+    expect('textures' in sceneInstances[0].options).toBe(false);
+  });
+
+  it('forwards textures when explicitly passed', async () => {
+    const textures = { day: 'a.jpg', spec: 'b.png', bump: 'c.png', clouds: 'd.png' };
+    await renderAndLoad(<InteractiveGlobe textures={textures} />);
+    expect(sceneInstances[0].options.textures).toBe(textures);
+  });
 });
 
 // ==================================================================

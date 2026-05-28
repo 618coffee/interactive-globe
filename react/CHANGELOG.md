@@ -7,17 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-05-28
+
+### Fixed
+- **Blank-screen crash when mounting `<InteractiveGlobe />` without the
+  `textures` prop** (latent since 0.1.0). The component was passing
+  `textures: undefined` into `GlobeScene`'s options spread, which wiped
+  the constructor's `DEFAULT_TEXTURES` baseline. `_initEarth` then
+  threw `Cannot read properties of undefined (reading 'day')` and the
+  whole React tree unmounted. Two-sided fix:
+  - `InteractiveGlobe` only includes `textures` in the scene options
+    when the prop is actually set.
+  - `GlobeScene` resolves `textures` *after* the spread and merges
+    incoming texture URLs on top of `DEFAULT_TEXTURES`, so a partial
+    `textures={{ day: '...' }}` now only overrides `day` and inherits
+    the rest. (Previously it would have ended up with only `day`.)
+- The unit tests didn't catch this because `GlobeScene` was mocked.
+  Added two regression tests asserting (a) `textures` is omitted from
+  scene options when the prop is absent and (b) it is forwarded
+  verbatim when present.
+
 ### Added
 - Vitest + React Testing Library suite covering every prop combination
   introduced in 0.2.0 / 0.3.0 (language, strings overrides, icon-only
   buttons, `controls` per-button visibility, `panels` layered on `ui`,
-  toggle clicks, imperative ref API, lifecycle callbacks). 52 tests,
+  toggle clicks, imperative ref API, lifecycle callbacks). 54 tests,
   jsdom, GlobeScene mocked so no WebGL is required.
 - `npm run test:ci` script; `prepublishOnly` now runs tests **before**
   the library build, so a regression blocks publish.
 - `.github/workflows/ci.yml` runs the suite on every push / PR to main.
 - `.github/workflows/release.yml` runs the suite before publish too,
   matching the local `prepublishOnly` gate.
+- `scripts/inspect-page.mjs` — Playwright-based smoke probe that loads
+  the dev server, captures console + page errors + failed requests,
+  and screenshots the result. Used to find the bug above (which the
+  jsdom-based unit tests couldn't see).
 
 ## [0.3.0] - 2026-05-28
 
@@ -86,7 +110,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Hand-written TypeScript declarations (`index.d.ts`).
 - MIT license.
 
-[Unreleased]: https://github.com/618coffee/interactive-globe/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/618coffee/interactive-globe/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/618coffee/interactive-globe/releases/tag/v0.3.1
 [0.3.0]: https://github.com/618coffee/interactive-globe/releases/tag/v0.3.0
 [0.2.0]: https://github.com/618coffee/interactive-globe/releases/tag/v0.2.0
 [0.1.0]: https://github.com/618coffee/interactive-globe/releases/tag/v0.1.0

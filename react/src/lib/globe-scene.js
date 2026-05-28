@@ -103,11 +103,13 @@ export class GlobeScene {
       showLabels: true,
       showMarkers: true,
       exposure: 1.4,
-      textures: DEFAULT_TEXTURES,
       onReady: null,
       onLoad: null,
       onPoiClick: null,
       ...options,
+      // Resolve textures AFTER the spread so callers passing
+      // `textures: undefined` don't wipe the defaults.
+      textures: { ...DEFAULT_TEXTURES, ...(options.textures || {}) },
     };
 
     this._disposed = false;

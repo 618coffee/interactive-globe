@@ -1,6 +1,6 @@
 {
   "name": "@618coffee/interactive-globe",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Full-screen interactive 3D Earth React component (Three.js): real Blue Marble textures, animated POI markers, LOD geographic labels, glass-morphism UI.",
   "license": "MIT",
   "author": "618coffee",
@@ -66,6 +66,7 @@
     "@testing-library/user-event": "^14.5.2",
     "@vitejs/plugin-react": "^4.3.4",
     "jsdom": "^25.0.1",
+    "playwright": "^1.60.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "three": "^0.160.0",

@@ -73,15 +73,16 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
 
   // ---- create scene once on mount ------------------------------------------
   useEffect(() => {
-    const scene = new GlobeScene(canvasRef.current, labelsRef.current, {
+    const sceneOpts = {
       pois, labels,
       autoRotate, showClouds, showAtmosphere, showLabels, showMarkers,
       exposure,
-      textures: textures || undefined,
       onReady: (api) => { if (onReady) onReady(api); },
       onLoad:  () => { setLoaded(true); if (onLoad) onLoad(); },
       onPoiClick,
-    });
+    };
+    if (textures) sceneOpts.textures = textures;
+    const scene = new GlobeScene(canvasRef.current, labelsRef.current, sceneOpts);
     sceneRef.current = scene;
     return () => { scene.dispose(); sceneRef.current = null; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
