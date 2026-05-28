@@ -1,0 +1,716 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Interactive Globe · 交互式地球</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #000; }
+    body {
+      font-family: ui-sans-serif, system-ui, -apple-system, "PingFang SC",
+                   "Microsoft YaHei", "Helvetica Neue", sans-serif;
+      color: #e6f0ff;
+      -webkit-font-smoothing: antialiased;
+    }
+    #app    { position: fixed; inset: 0; }
+    #scene  { position: absolute; inset: 0; display: block; touch-action: none; }
+    #labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+
+    .label {
+      position: absolute;
+      top: 0; left: 0;
+      white-space: nowrap;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      color: rgba(220, 240, 255, 0.92);
+      text-shadow: 0 0 8px rgba(0, 12, 24, 0.95), 0 0 2px rgba(0, 12, 24, 0.95);
+      pointer-events: none;
+      will-change: transform, opacity;
+      transition: opacity 220ms ease;
+      transform: translate3d(-9999px, -9999px, 0);
+    }
+    .label.continent {
+      font-size: 13px;
+      letter-spacing: 0.45em;
+      font-weight: 300;
+      color: rgba(255, 255, 255, 0.85);
+    }
+    .label.ocean {
+      font-style: italic;
+      color: rgba(170, 220, 255, 0.78);
+      letter-spacing: 0.3em;
+    }
+    .label.country {
+      color: rgba(255, 245, 220, 0.95);
+      font-size: 12px;
+    }
+    .label.city {
+      color: rgba(190, 240, 255, 0.95);
+      font-size: 11px;
+      padding-left: 10px;
+    }
+    .label.mountain {
+      color: rgba(245, 220, 180, 0.92);
+      font-size: 11px;
+    }
+    .label.mountain::before { content: '▲ '; color: rgba(245, 200, 150, 0.85); }
+
+    .glass {
+      background: rgba(10, 16, 28, 0.42);
+      backdrop-filter: blur(20px) saturate(150%);
+      -webkit-backdrop-filter: blur(20px) saturate(150%);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow:
+        0 10px 40px rgba(0, 0, 0, 0.55),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 9px 12px;
+      border-radius: 10px;
+      color: rgba(225, 238, 255, 0.86);
+      transition: background 160ms ease, color 160ms ease,
+                  transform 120ms ease, box-shadow 160ms ease;
+      user-select: none;
+      cursor: pointer;
+      font-size: 12.5px;
+      letter-spacing: 0.02em;
+    }
+    .btn:hover { background: rgba(255, 255, 255, 0.07); color: #ffffff; }
+    .btn:active { transform: scale(0.96); }
+    .btn.active {
+      background: rgba(110, 220, 255, 0.16);
+      color: #d6f3ff;
+      box-shadow: inset 0 0 0 1px rgba(124, 230, 255, 0.32),
+                  0 0 18px -8px rgba(124, 230, 255, 0.6);
+    }
+    .divider { width: 1px; height: 22px; background: rgba(255, 255, 255, 0.09); margin: 0 4px; }
+
+    .loader {
+      position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+      background: radial-gradient(ellipse at center, #051022 0%, #000 70%);
+      color: rgba(190, 220, 255, 0.85); font-size: 12px; letter-spacing: 0.3em;
+      z-index: 50; transition: opacity 500ms ease;
+    }
+    .loader .ring {
+      width: 36px; height: 36px; margin-right: 14px;
+      border: 1.5px solid rgba(124, 230, 255, 0.2);
+      border-top-color: rgba(124, 230, 255, 0.95);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div id="loader" class="loader">
+    <div class="ring"></div>
+    <div>LOADING EARTH</div>
+  </div>
+
+  <div id="app">
+    <canvas id="scene"></canvas>
+    <div id="labels"></div>
+
+    <div class="absolute top-4 left-4 glass rounded-2xl px-4 py-3 flex items-center gap-3 select-none">
+      <div class="w-2 h-2 rounded-full bg-cyan-300 shadow-[0_0_12px_rgba(124,230,255,0.9)]"></div>
+      <div>
+        <div class="text-[10px] uppercase tracking-[0.32em] text-cyan-200/70">Interactive Globe</div>
+        <div class="text-sm font-light mt-0.5">交互式地球 · 三维可视化</div>
+      </div>
+    </div>
+
+    <div id="info" class="absolute top-4 right-4 glass rounded-2xl px-4 py-3 w-56 text-[12px] leading-relaxed select-none">
+      <div class="flex justify-between text-cyan-200/70 uppercase tracking-widest text-[10px]">
+        <span>视图</span><span id="zoomLevel">L1</span>
+      </div>
+      <div class="flex justify-between mt-2"><span class="opacity-60">纬度</span><span id="lat" class="tabular-nums">0.00°</span></div>
+      <div class="flex justify-between"><span class="opacity-60">经度</span><span id="lon" class="tabular-nums">0.00°</span></div>
+      <div class="flex justify-between"><span class="opacity-60">距离</span><span id="dist" class="tabular-nums">3.00</span></div>
+      <div class="mt-2 pt-2 border-t border-white/10 text-[10.5px] opacity-70 leading-snug">
+        拖拽旋转 · 滚轮缩放<br/>触控板双指捏合
+      </div>
+    </div>
+
+    <div class="absolute bottom-6 left-1/2 -translate-x-1/2 glass rounded-2xl px-2 py-2 flex items-center gap-1">
+      <div class="btn" data-action="reset" title="重置视角">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+        <span>重置</span>
+      </div>
+      <div class="btn" data-action="zoom-in" title="放大">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M11 8v6M8 11h6M20 20l-3.5-3.5"/></svg>
+      </div>
+      <div class="btn" data-action="zoom-out" title="缩小">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M8 11h6M20 20l-3.5-3.5"/></svg>
+      </div>
+      <div class="divider"></div>
+      <div class="btn active" data-toggle="autorotate" title="自动旋转">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v3M22 12h-3M12 22v-3M2 12h3"/><circle cx="12" cy="12" r="5"/></svg>
+        <span>自转</span>
+      </div>
+      <div class="btn active" data-toggle="labels" title="地理标签">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 17l9 4 9-4"/><path d="M3 12l9 4 9-4"/></svg>
+        <span>标签</span>
+      </div>
+      <div class="btn active" data-toggle="markers" title="POI">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-7.5-7-12a7 7 0 1 1 14 0c0 4.5-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>
+        <span>POI</span>
+      </div>
+      <div class="btn active" data-toggle="clouds" title="云层">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18a5 5 0 1 1 .5-9.97A6 6 0 0 1 19 11a4 4 0 0 1 0 8H7z"/></svg>
+        <span>云层</span>
+      </div>
+      <div class="btn active" data-toggle="atmosphere" title="大气层">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+        <span>大气</span>
+      </div>
+    </div>
+  </div>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+    // ============================================================
+    // Renderer / Scene / Camera
+    // ============================================================
+    const canvas       = document.getElementById('scene');
+    const labelsLayer  = document.getElementById('labels');
+    const loaderEl     = document.getElementById('loader');
+
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping      = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.05;
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x000208);
+
+    const camera = new THREE.PerspectiveCamera(45, 1, 0.05, 2000);
+    camera.position.set(0, 0.3, 3);
+
+    const controls = new OrbitControls(camera, canvas);
+    controls.enableDamping  = true;
+    controls.dampingFactor  = 0.08;
+    controls.rotateSpeed    = 0.55;
+    controls.zoomSpeed      = 0.9;
+    controls.minDistance    = 1.25;
+    controls.maxDistance    = 8;
+    controls.enablePan      = false;
+    controls.autoRotate     = true;
+    controls.autoRotateSpeed = 0.35;
+
+    // ============================================================
+    // Star field
+    // ============================================================
+    function makeStars() {
+      const geo = new THREE.BufferGeometry();
+      const count = 4500;
+      const pos = new Float32Array(count * 3);
+      const col = new Float32Array(count * 3);
+      for (let i = 0; i < count; i++) {
+        const r = 90 + Math.random() * 250;
+        const u = Math.random(), v = Math.random();
+        const theta = 2 * Math.PI * u;
+        const phi = Math.acos(2 * v - 1);
+        pos[i*3]   = r * Math.sin(phi) * Math.cos(theta);
+        pos[i*3+1] = r * Math.cos(phi);
+        pos[i*3+2] = r * Math.sin(phi) * Math.sin(theta);
+        const t = 0.65 + Math.random() * 0.35;
+        const tint = Math.random();
+        col[i*3]   = t * (tint > 0.9 ? 0.85 : 1);
+        col[i*3+1] = t;
+        col[i*3+2] = t * (tint < 0.1 ? 0.85 : 1);
+      }
+      geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      geo.setAttribute('color',    new THREE.BufferAttribute(col, 3));
+      const mat = new THREE.PointsMaterial({
+        size: 0.7, vertexColors: true, sizeAttenuation: true,
+        transparent: true, opacity: 0.85, depthWrite: false
+      });
+      return new THREE.Points(geo, mat);
+    }
+    scene.add(makeStars());
+
+    // ============================================================
+    // Lights
+    // ============================================================
+    // Sun tracks the camera so the visible hemisphere is always lit
+    // (a small lateral offset keeps the normal-map terrain visible)
+    const sun = new THREE.DirectionalLight(0xfff5e6, 1.6);
+    sun.position.set(5, 2, 3);
+    scene.add(sun);
+    scene.add(new THREE.AmbientLight(0xb8c8e0, 1.1));
+
+    // ============================================================
+    // Earth + Clouds + Atmosphere
+    // ============================================================
+    const TEX_BASE = 'https://threejs.org/examples/textures/planets/';
+    const manager = new THREE.LoadingManager(() => {
+      loaderEl.style.opacity = '0';
+      setTimeout(() => loaderEl.remove(), 600);
+    });
+    const loader = new THREE.TextureLoader(manager);
+    loader.crossOrigin = 'anonymous';
+
+    const dayTex    = loader.load(TEX_BASE + 'earth_atmos_2048.jpg');
+    const specTex   = loader.load(TEX_BASE + 'earth_specular_2048.jpg');
+    const normalTex = loader.load(TEX_BASE + 'earth_normal_2048.jpg');
+    const cloudTex  = loader.load(TEX_BASE + 'earth_clouds_1024.png');
+    dayTex.colorSpace = THREE.SRGBColorSpace;
+    dayTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+
+    const earthGeo = new THREE.SphereGeometry(1, 96, 96);
+    const earthMat = new THREE.MeshPhongMaterial({
+      map: dayTex,
+      specularMap: specTex,
+      normalMap: normalTex,
+      normalScale: new THREE.Vector2(0.7, 0.7),
+      specular: new THREE.Color(0x2a3a55),
+      shininess: 18
+    });
+    const earth = new THREE.Mesh(earthGeo, earthMat);
+    scene.add(earth);
+
+    const cloudsMat = new THREE.MeshLambertMaterial({
+      map: cloudTex, transparent: true, opacity: 0.55, depthWrite: false
+    });
+    const clouds = new THREE.Mesh(new THREE.SphereGeometry(1.012, 96, 96), cloudsMat);
+    scene.add(clouds);
+
+    const atmosphereMat = new THREE.ShaderMaterial({
+      uniforms: { glowColor: { value: new THREE.Color(0x4fc3ff) } },
+      vertexShader: `
+        varying vec3 vNormal;
+        void main() {
+          vNormal = normalize(normalMatrix * normal);
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }`,
+      fragmentShader: `
+        varying vec3 vNormal;
+        uniform vec3 glowColor;
+        void main() {
+          float f = pow(1.0 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 3.0);
+          gl_FragColor = vec4(glowColor, 1.0) * f;
+        }`,
+      side: THREE.BackSide,
+      blending: THREE.AdditiveBlending,
+      transparent: true,
+      depthWrite: false
+    });
+    const atmosphere = new THREE.Mesh(new THREE.SphereGeometry(1.07, 64, 64), atmosphereMat);
+    scene.add(atmosphere);
+
+    // ============================================================
+    // POIs (cities) + procedural marker texture
+    // ============================================================
+    const POIS = [
+      { name:'London',       lat: 51.5074, lon: -0.1278   },
+      { name:'Paris',        lat: 48.8566, lon: 2.3522    },
+      { name:'Rome',         lat: 41.9028, lon: 12.4964   },
+      { name:'Madrid',       lat: 40.4168, lon: -3.7038   },
+      { name:'Berlin',       lat: 52.5200, lon: 13.4050   },
+      { name:'Istanbul',     lat: 41.0082, lon: 28.9784   },
+      { name:'Moscow',       lat: 55.7558, lon: 37.6173   },
+      { name:'Cairo',        lat: 30.0444, lon: 31.2357   },
+      { name:'Lagos',        lat: 6.5244,  lon: 3.3792    },
+      { name:'Nairobi',      lat: -1.2921, lon: 36.8219   },
+      { name:'Cape Town',    lat: -33.9249,lon: 18.4241   },
+      { name:'Riyadh',       lat: 24.7136, lon: 46.6753   },
+      { name:'Dubai',        lat: 25.2048, lon: 55.2708   },
+      { name:'Tehran',       lat: 35.6892, lon: 51.3890   },
+      { name:'Mumbai',       lat: 19.0760, lon: 72.8777   },
+      { name:'New Delhi',    lat: 28.6139, lon: 77.2090   },
+      { name:'Bangkok',      lat: 13.7563, lon: 100.5018  },
+      { name:'Singapore',    lat: 1.3521,  lon: 103.8198  },
+      { name:'Jakarta',      lat: -6.2088, lon: 106.8456  },
+      { name:'Hong Kong',    lat: 22.3193, lon: 114.1694  },
+      { name:'Beijing',      lat: 39.9042, lon: 116.4074  },
+      { name:'Shanghai',     lat: 31.2304, lon: 121.4737  },
+      { name:'Seoul',        lat: 37.5665, lon: 126.9780  },
+      { name:'Tokyo',        lat: 35.6762, lon: 139.6503  },
+      { name:'Sydney',       lat: -33.8688,lon: 151.2093  },
+      { name:'New York',     lat: 40.7128, lon: -74.0060  },
+      { name:'Los Angeles',  lat: 34.0522, lon: -118.2437 },
+      { name:'Mexico City',  lat: 19.4326, lon: -99.1332  },
+      { name:'São Paulo',    lat: -23.5505,lon: -46.6333  },
+      { name:'Buenos Aires', lat: -34.6037,lon: -58.3816  },
+    ];
+
+    function latLonToVec3(lat, lon, r = 1) {
+      const phi   = (90 - lat) * Math.PI / 180;
+      const theta = (lon + 180) * Math.PI / 180;
+      return new THREE.Vector3(
+        -r * Math.sin(phi) * Math.cos(theta),
+         r * Math.cos(phi),
+         r * Math.sin(phi) * Math.sin(theta)
+      );
+    }
+
+    function makeMarkerTexture() {
+      const size = 128;
+      const c = document.createElement('canvas');
+      c.width = c.height = size;
+      const ctx = c.getContext('2d');
+      const cx = size / 2, cy = size / 2;
+      // outer ring
+      ctx.strokeStyle = 'rgba(140, 235, 255, 0.95)';
+      ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(cx, cy, 38, 0, Math.PI * 2); ctx.stroke();
+      // mid ring
+      ctx.strokeStyle = 'rgba(140, 235, 255, 0.55)';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(cx, cy, 22, 0, Math.PI * 2); ctx.stroke();
+      // glow + dot
+      const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, 18);
+      g.addColorStop(0, 'rgba(190, 250, 255, 0.95)');
+      g.addColorStop(0.5, 'rgba(140, 235, 255, 0.4)');
+      g.addColorStop(1, 'rgba(140, 235, 255, 0)');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(cx, cy, 18, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(220, 250, 255, 1)';
+      ctx.beginPath(); ctx.arc(cx, cy, 5, 0, Math.PI * 2); ctx.fill();
+      const t = new THREE.CanvasTexture(c);
+      t.colorSpace = THREE.SRGBColorSpace;
+      return t;
+    }
+    const markerTex = makeMarkerTexture();
+
+    const markers = new THREE.Group();
+    const markerMeshes = [];
+    POIS.forEach((poi, idx) => {
+      const pos = latLonToVec3(poi.lat, poi.lon, 1.005);
+      const mat = new THREE.MeshBasicMaterial({
+        map: markerTex,
+        transparent: true,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+        side: THREE.DoubleSide
+      });
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(0.06, 0.06), mat);
+      m.position.copy(pos);
+      m.lookAt(pos.clone().multiplyScalar(2));
+      m.userData = { poi, phase: idx * 0.42, baseScale: 1 };
+      markers.add(m);
+      markerMeshes.push(m);
+    });
+    earth.add(markers);
+
+    // ============================================================
+    // Geographic labels (LOD-driven)
+    // ============================================================
+    const LABELS = [
+      // Continents (lod 0 - always visible)
+      { name:'AFRICA',         lat: 5,    lon: 22,    type:'continent', lod: 0 },
+      { name:'EUROPE',         lat: 54,   lon: 14,    type:'continent', lod: 0 },
+      { name:'ASIA',           lat: 50,   lon: 90,    type:'continent', lod: 0 },
+      { name:'NORTH AMERICA',  lat: 45,   lon: -100,  type:'continent', lod: 0 },
+      { name:'SOUTH AMERICA',  lat: -15,  lon: -60,   type:'continent', lod: 0 },
+      { name:'OCEANIA',        lat: -25,  lon: 135,   type:'continent', lod: 0 },
+      { name:'ANTARCTICA',     lat: -82,  lon: 0,     type:'continent', lod: 0 },
+
+      // Oceans (lod 0)
+      { name:'Pacific Ocean',  lat: 0,    lon: -150,  type:'ocean', lod: 0 },
+      { name:'Atlantic Ocean', lat: 10,   lon: -35,   type:'ocean', lod: 0 },
+      { name:'Indian Ocean',   lat: -25,  lon: 78,    type:'ocean', lod: 0 },
+      { name:'Arctic Ocean',   lat: 84,   lon: 0,     type:'ocean', lod: 0 },
+      { name:'Southern Ocean', lat: -65,  lon: 30,    type:'ocean', lod: 0 },
+
+      // Countries (lod 1)
+      { name:'China',          lat: 35,   lon: 103,   type:'country', lod: 1 },
+      { name:'India',          lat: 22,   lon: 79,    type:'country', lod: 1 },
+      { name:'Russia',         lat: 62,   lon: 95,    type:'country', lod: 1 },
+      { name:'United States',  lat: 39,   lon: -98,   type:'country', lod: 1 },
+      { name:'Canada',         lat: 56,   lon: -106,  type:'country', lod: 1 },
+      { name:'Brazil',         lat: -10,  lon: -55,   type:'country', lod: 1 },
+      { name:'Argentina',      lat: -36,  lon: -64,   type:'country', lod: 1 },
+      { name:'Australia',      lat: -25,  lon: 134,   type:'country', lod: 1 },
+      { name:'Mongolia',       lat: 47,   lon: 104,   type:'country', lod: 1 },
+      { name:'Kazakhstan',     lat: 48,   lon: 67,    type:'country', lod: 1 },
+      { name:'Iran',           lat: 32,   lon: 53,    type:'country', lod: 1 },
+      { name:'Saudi Arabia',   lat: 24,   lon: 45,    type:'country', lod: 1 },
+      { name:'Egypt',          lat: 27,   lon: 30,    type:'country', lod: 1 },
+      { name:'Algeria',        lat: 28,   lon: 2,     type:'country', lod: 1 },
+      { name:'Sudan',          lat: 15,   lon: 30,    type:'country', lod: 1 },
+      { name:'Nigeria',        lat: 10,   lon: 8,     type:'country', lod: 1 },
+      { name:'DR Congo',       lat: -2,   lon: 23,    type:'country', lod: 1 },
+      { name:'South Africa',   lat: -29,  lon: 24,    type:'country', lod: 1 },
+      { name:'Indonesia',      lat: -2,   lon: 118,   type:'country', lod: 1 },
+      { name:'Japan',          lat: 36,   lon: 138,   type:'country', lod: 1 },
+      { name:'Turkey',         lat: 39,   lon: 35,    type:'country', lod: 1 },
+      { name:'Mexico',         lat: 23,   lon: -102,  type:'country', lod: 1 },
+      { name:'Greenland',      lat: 72,   lon: -40,   type:'country', lod: 1 },
+      { name:'France',         lat: 46,   lon: 2,     type:'country', lod: 1 },
+      { name:'Germany',        lat: 51,   lon: 10,    type:'country', lod: 1 },
+      { name:'Spain',          lat: 40,   lon: -4,    type:'country', lod: 1 },
+      { name:'UK',             lat: 54,   lon: -3,    type:'country', lod: 1 },
+      { name:'Italy',          lat: 43,   lon: 12,    type:'country', lod: 1 },
+
+      // Seas (lod 1)
+      { name:'Mediterranean Sea', lat: 35, lon: 18,  type:'ocean', lod: 1 },
+      { name:'Red Sea',           lat: 20, lon: 38,  type:'ocean', lod: 1 },
+      { name:'Caribbean Sea',     lat: 15, lon: -75, type:'ocean', lod: 1 },
+      { name:'Caspian Sea',       lat: 42, lon: 50,  type:'ocean', lod: 1 },
+      { name:'Black Sea',         lat: 43, lon: 35,  type:'ocean', lod: 1 },
+      { name:'Arabian Sea',       lat: 15, lon: 65,  type:'ocean', lod: 1 },
+      { name:'Bay of Bengal',     lat: 15, lon: 88,  type:'ocean', lod: 1 },
+      { name:'South China Sea',   lat: 15, lon: 115, type:'ocean', lod: 1 },
+      { name:'Bering Sea',        lat: 58, lon: -178,type:'ocean', lod: 1 },
+      { name:'Gulf of Mexico',    lat: 25, lon: -90, type:'ocean', lod: 1 },
+
+      // Mountains (lod 2)
+      { name:'Himalayas',   lat: 28,    lon: 84,    type:'mountain', lod: 2 },
+      { name:'Alps',        lat: 46,    lon: 9,     type:'mountain', lod: 2 },
+      { name:'Andes',       lat: -20,   lon: -68,   type:'mountain', lod: 2 },
+      { name:'Rockies',     lat: 44,    lon: -110,  type:'mountain', lod: 2 },
+      { name:'Ural Mts.',   lat: 60,    lon: 60,    type:'mountain', lod: 2 },
+      { name:'Atlas Mts.',  lat: 32,    lon: -5,    type:'mountain', lod: 2 },
+      { name:'Caucasus',    lat: 43,    lon: 44,    type:'mountain', lod: 2 },
+      { name:'Tian Shan',   lat: 42,    lon: 78,    type:'mountain', lod: 2 },
+      { name:'Mt. Everest', lat: 27.99, lon: 86.92, type:'mountain', lod: 3 },
+      { name:'Mt. Fuji',    lat: 35.36, lon: 138.73,type:'mountain', lod: 3 },
+      { name:'Kilimanjaro', lat: -3.07, lon: 37.35, type:'mountain', lod: 3 },
+    ];
+
+    // Cities become labels at lod 2
+    POIS.forEach(p => LABELS.push({
+      name: p.name, lat: p.lat, lon: p.lon, type: 'city', lod: 2
+    }));
+
+    const labelEntries = LABELS.map(item => {
+      const el = document.createElement('div');
+      el.className = `label ${item.type}`;
+      el.textContent = item.name;
+      labelsLayer.appendChild(el);
+      return {
+        el,
+        type: item.type,
+        lod: item.lod,
+        // local position on the earth (radius slightly > 1)
+        pos: latLonToVec3(item.lat, item.lon, item.type === 'continent' ? 1.0 : 1.02),
+        visible: false
+      };
+    });
+
+    function lodDistanceCap(lod) {
+      // smaller distance => more zoomed in
+      switch (lod) {
+        case 0: return Infinity;
+        case 1: return 4.5;
+        case 2: return 2.5;
+        case 3: return 1.7;
+        default: return 0;
+      }
+    }
+
+    // ============================================================
+    // UI state and interactions
+    // ============================================================
+    const state = {
+      autorotate: true,
+      labels:     true,
+      markers:    true,
+      clouds:     true,
+      atmosphere: true,
+    };
+
+    document.querySelectorAll('[data-action]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const a = btn.dataset.action;
+        if (a === 'reset')   resetView();
+        if (a === 'zoom-in') zoom(0.78);
+        if (a === 'zoom-out')zoom(1.28);
+      });
+    });
+    document.querySelectorAll('[data-toggle]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const k = btn.dataset.toggle;
+        state[k] = !state[k];
+        btn.classList.toggle('active', state[k]);
+        if (k === 'autorotate') controls.autoRotate = state[k];
+        if (k === 'clouds')     clouds.visible      = state[k];
+        if (k === 'markers')    markers.visible     = state[k];
+        if (k === 'atmosphere') atmosphere.visible  = state[k];
+      });
+    });
+
+    // Stop auto-rotate when user grabs the globe
+    let userInteracting = false;
+    controls.addEventListener('start', () => { userInteracting = true; });
+    controls.addEventListener('end',   () => { userInteracting = false; });
+
+    function tween(getStart, getEnd, dur, onUpdate) {
+      const start = getStart();
+      const end   = getEnd();
+      const t0 = performance.now();
+      function step(t) {
+        const u = Math.min(1, (t - t0) / dur);
+        const e = 1 - Math.pow(1 - u, 3); // easeOutCubic
+        onUpdate(start, end, e);
+        if (u < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }
+
+    function resetView() {
+      const sPos = camera.position.clone();
+      const ePos = new THREE.Vector3(0, 0.3, 3);
+      const sTar = controls.target.clone();
+      const eTar = new THREE.Vector3(0, 0, 0);
+      const t0 = performance.now(); const dur = 700;
+      function step(t) {
+        const u = Math.min(1, (t - t0) / dur);
+        const e = 1 - Math.pow(1 - u, 3);
+        camera.position.lerpVectors(sPos, ePos, e);
+        controls.target.lerpVectors(sTar, eTar, e);
+        if (u < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }
+
+    function zoom(factor) {
+      const dir = camera.position.clone().sub(controls.target).normalize();
+      const cur = camera.position.distanceTo(controls.target);
+      const target = THREE.MathUtils.clamp(cur * factor, controls.minDistance, controls.maxDistance);
+      const sPos = camera.position.clone();
+      const ePos = controls.target.clone().add(dir.multiplyScalar(target));
+      const t0 = performance.now(); const dur = 320;
+      function step(t) {
+        const u = Math.min(1, (t - t0) / dur);
+        const e = 1 - Math.pow(1 - u, 3);
+        camera.position.lerpVectors(sPos, ePos, e);
+        if (u < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }
+
+    // ============================================================
+    // Per-frame info + label projection
+    // ============================================================
+    const tmpVec    = new THREE.Vector3();
+    const tmpNor    = new THREE.Vector3();
+    const sunOffset = new THREE.Vector3();
+    const yAxis     = new THREE.Vector3(0, 1, 0);
+    const elZoom = document.getElementById('zoomLevel');
+    const elLat  = document.getElementById('lat');
+    const elLon  = document.getElementById('lon');
+    const elDist = document.getElementById('dist');
+
+    function updateInfo() {
+      const dist = camera.position.distanceTo(controls.target);
+      elDist.textContent = dist.toFixed(2);
+
+      const o = camera.position.clone().sub(controls.target);
+      const r = o.length();
+      const lat = 90 - Math.acos(THREE.MathUtils.clamp(o.y / r, -1, 1)) * 180 / Math.PI;
+      let lon = Math.atan2(o.x, o.z) * 180 / Math.PI;
+      // Normalize lon roughly to align with the day texture's prime meridian
+      lon = ((lon + 540) % 360) - 180;
+      elLat.textContent = lat.toFixed(2) + '°';
+      elLon.textContent = lon.toFixed(2) + '°';
+
+      const level = dist < 1.7 ? 'L3' : dist < 2.5 ? 'L2' : dist < 4.5 ? 'L1' : 'L0';
+      elZoom.textContent = level;
+    }
+
+    function updateLabels() {
+      const w = window.innerWidth, h = window.innerHeight;
+      const halfW = w * 0.5, halfH = h * 0.5;
+      const dist = camera.position.distanceTo(controls.target);
+      const showAny = state.labels;
+
+      for (const ld of labelEntries) {
+        const distCap = lodDistanceCap(ld.lod);
+        if (!showAny || dist > distCap) {
+          if (ld.visible) { ld.el.style.opacity = '0'; ld.visible = false; }
+          continue;
+        }
+
+        tmpVec.copy(ld.pos).applyMatrix4(earth.matrixWorld);
+        tmpNor.copy(tmpVec).normalize();
+        // facing factor: 1 = directly at camera, -1 = behind globe
+        const toCam = tmpVec.clone().sub(camera.position).normalize();
+        const facing = -tmpNor.dot(toCam);
+
+        if (facing < 0.08) {
+          if (ld.visible) { ld.el.style.opacity = '0'; ld.visible = false; }
+          continue;
+        }
+
+        const ndc = tmpVec.clone().project(camera);
+        if (ndc.z > 1) {
+          if (ld.visible) { ld.el.style.opacity = '0'; ld.visible = false; }
+          continue;
+        }
+
+        const x = ndc.x * halfW + halfW;
+        const y = -ndc.y * halfH + halfH;
+        const dy = ld.type === 'city' ? -14 : 0;
+
+        // fade in near the rim, fade out at LOD edge
+        const rim = THREE.MathUtils.clamp((facing - 0.08) / 0.22, 0, 1);
+        const lodFade = distCap === Infinity
+          ? 1
+          : THREE.MathUtils.clamp((distCap - dist) / (distCap * 0.18), 0, 1);
+        const op = rim * lodFade;
+
+        ld.el.style.transform = `translate3d(${(x|0)}px, ${((y + dy)|0)}px, 0) translate(-50%, -50%)`;
+        ld.el.style.opacity = op.toFixed(2);
+        ld.visible = true;
+      }
+    }
+
+    // ============================================================
+    // Animate
+    // ============================================================
+    const clock = new THREE.Clock();
+    function animate() {
+      requestAnimationFrame(animate);
+      const dt = Math.min(clock.getDelta(), 0.05);
+      const t  = clock.elapsedTime;
+
+      if (state.clouds) clouds.rotation.y += dt * 0.012;
+
+      // Sun tracks the camera so the lit hemisphere is always toward the viewer.
+      // Offset rotates the highlight slightly off-axis so specular + normal map read.
+      sunOffset.copy(camera.position).applyAxisAngle(yAxis, 0.35);
+      sun.position.copy(sunOffset);
+
+      if (state.markers) {
+        for (const m of markerMeshes) {
+          const p = (Math.sin(t * 2.2 + m.userData.phase) * 0.5 + 0.5);
+          const s = 0.055 + p * 0.018;
+          m.scale.setScalar(s);
+          m.material.opacity = 0.55 + p * 0.45;
+        }
+      }
+
+      controls.update();
+      updateInfo();
+      updateLabels();
+      renderer.render(scene, camera);
+    }
+
+    function resize() {
+      const w = window.innerWidth, h = window.innerHeight;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    }
+    resize();
+    window.addEventListener('resize', resize);
+    animate();
+  </script>
+</body>
+</html>
