@@ -56,6 +56,50 @@ export interface GlobeInfo {
 }
 
 // ----------------------------------------------------------------------------
+// UI configuration: language + per-button visibility
+// ----------------------------------------------------------------------------
+
+/** Built-in language bundle keys, used by both the top panels and the bottom button bar. */
+export interface UIStrings {
+  eyebrow: string;
+  title: string;
+  view: string;
+  lat: string;
+  lon: string;
+  distance: string;
+  hintLine1: string;
+  hintLine2: string;
+  loadingText: string;
+  reset: string;
+  zoomIn: string;
+  zoomOut: string;
+  autoRotate: string;
+  labels: string;
+  poi: string;
+  clouds: string;
+  atmosphere: string;
+}
+
+export type Language = 'zh' | 'en';
+
+/**
+ * Per-button visibility in the bottom bar. Omitted keys default to `true`.
+ * Hiding a button does **not** change the underlying scene state — pair it
+ * with the matching `show*` prop (or imperative call) if you want to force
+ * the layer on/off too.
+ */
+export interface BottomControlsConfig {
+  reset?: boolean;
+  zoomIn?: boolean;
+  zoomOut?: boolean;
+  autoRotate?: boolean;
+  labels?: boolean;
+  markers?: boolean;
+  clouds?: boolean;
+  atmosphere?: boolean;
+}
+
+// ----------------------------------------------------------------------------
 // Scene class (framework-agnostic)
 // ----------------------------------------------------------------------------
 
@@ -122,6 +166,12 @@ export interface InteractiveGlobeProps {
   labels?: LabelItem[];
   /** `'full'` keeps all chrome, `'minimal'` only the bottom bar, `'none'` strips all UI. */
   ui?: 'full' | 'minimal' | 'none';
+  /** Built-in UI language. Default `'zh'`. */
+  language?: Language;
+  /** Partial overrides for individual UI strings (merged on top of the language bundle). */
+  strings?: Partial<UIStrings>;
+  /** Per-button visibility in the bottom bar. Omitted keys default to `true`. */
+  controls?: BottomControlsConfig;
   autoRotate?: boolean;
   showClouds?: boolean;
   showAtmosphere?: boolean;
@@ -147,3 +197,6 @@ export const InteractiveGlobe: ForwardRefExoticComponent<
 
 export const DEFAULT_POIS: POI[];
 export const DEFAULT_LABELS: LabelItem[];
+
+/** Built-in language bundles, keyed by `Language`. */
+export const STRINGS: Record<Language, UIStrings>;

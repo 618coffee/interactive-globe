@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-05-28
+
+### Added
+- **`language` prop** (`'zh' | 'en'`, default `'zh'`) selects the bundled UI
+  language. English bundle ships alongside the existing Chinese one.
+- **`strings` prop** accepts a `Partial<UIStrings>` for fine-grained text
+  overrides on top of the chosen language.
+- **`controls` prop** controls per-button visibility in the bottom bar:
+  `{ reset, zoomIn, zoomOut, autoRotate, labels, markers, clouds, atmosphere }`.
+  Omitted keys default to `true`. The action / toggle divider auto-collapses
+  when one side is fully hidden.
+- Exported `STRINGS` constant so hosts can read the built-in bundles
+  directly (e.g. to seed a partial `strings` override).
+
+### Notes
+- Hiding a control button does **not** change the underlying scene state.
+  Pair `controls.labels: false` with `showLabels={false}` if you also want
+  the labels themselves off.
+
 ## [0.1.0] - 2026-05-28
 
 ### Added
@@ -35,5 +54,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Hand-written TypeScript declarations (`index.d.ts`).
 - MIT license.
 
-[Unreleased]: https://github.com/618coffee/interactive-globe/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/618coffee/interactive-globe/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/618coffee/interactive-globe/releases/tag/v0.2.0
 [0.1.0]: https://github.com/618coffee/interactive-globe/releases/tag/v0.1.0
