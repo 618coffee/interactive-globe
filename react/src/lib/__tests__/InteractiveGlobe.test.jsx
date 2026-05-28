@@ -227,6 +227,68 @@ describe('panels prop', () => {
 });
 
 // ==================================================================
+// infoCard prop (per-row visibility inside the top-right card)
+// ==================================================================
+describe('infoCard prop', () => {
+  it('renders every row by default', async () => {
+    const { container } = await renderAndLoad(<InteractiveGlobe />);
+    // 4 info rows + 1 hint = 5 things; rows have class ig-info-row
+    expect(container.querySelectorAll('.ig-top-right .ig-info-row').length).toBe(4);
+    expect(container.querySelector('.ig-top-right .ig-hint')).toBeInTheDocument();
+  });
+
+  it('hides individual rows when set to false', async () => {
+    const { container } = await renderAndLoad(
+      <InteractiveGlobe infoCard={{ lat: false, lon: false }} />,
+    );
+    // 4 rows minus 2 = 2 rows; both label texts gone
+    expect(container.querySelectorAll('.ig-top-right .ig-info-row').length).toBe(2);
+    expect(screen.queryByText('纬度')).not.toBeInTheDocument();
+    expect(screen.queryByText('经度')).not.toBeInTheDocument();
+    // others still there
+    expect(screen.getByText('视图')).toBeInTheDocument();
+    expect(screen.getByText('距离')).toBeInTheDocument();
+  });
+
+  it('hint: false hides the hint footer', async () => {
+    const { container } = await renderAndLoad(
+      <InteractiveGlobe infoCard={{ hint: false }} />,
+    );
+    expect(container.querySelector('.ig-top-right .ig-hint')).toBeNull();
+    // the 4 rows still render
+    expect(container.querySelectorAll('.ig-top-right .ig-info-row').length).toBe(4);
+  });
+
+  it('hiding every row also collapses the info card itself', async () => {
+    const { container } = await renderAndLoad(
+      <InteractiveGlobe infoCard={{
+        view: false, lat: false, lon: false, distance: false, hint: false,
+      }} />,
+    );
+    expect(container.querySelector('.ig-top-right')).toBeNull();
+  });
+
+  it('hint-only mode renders the hint without a divider above it', async () => {
+    const { container } = await renderAndLoad(
+      <InteractiveGlobe infoCard={{
+        view: false, lat: false, lon: false, distance: false,
+      }} />,
+    );
+    const card = container.querySelector('.ig-top-right');
+    expect(card).toBeInTheDocument();
+    expect(card.querySelectorAll('.ig-info-row').length).toBe(0);
+    expect(card.querySelector('.ig-hint')).toBeInTheDocument();
+  });
+
+  it('panels.info=false still wins over individual infoCard rows', async () => {
+    const { container } = await renderAndLoad(
+      <InteractiveGlobe panels={{ info: false }} infoCard={{ lat: true, distance: true }} />,
+    );
+    expect(container.querySelector('.ig-top-right')).toBeNull();
+  });
+});
+
+// ==================================================================
 // ui preset
 // ==================================================================
 describe('ui preset', () => {

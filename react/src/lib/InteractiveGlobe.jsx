@@ -3,7 +3,7 @@ import { GlobeScene } from './globe-scene.js';
 import { GlobeUI } from './GlobeUI.jsx';
 import { DEFAULT_POIS } from './data/pois.js';
 import { DEFAULT_LABELS } from './data/labels.js';
-import { resolveStrings, resolveControls, resolvePanels } from './strings.js';
+import { resolveStrings, resolveControls, resolvePanels, resolveInfoCard } from './strings.js';
 import './styles.css';
 
 /**
@@ -22,6 +22,9 @@ import './styles.css';
  *   controls          per-button visibility in the bottom bar:
  *                     { reset, zoomIn, zoomOut, autoRotate, labels,
  *                       markers, clouds, atmosphere } booleans     default: all true
+ *   infoCard          per-row visibility inside the top-right info
+ *                     readout: { view, lat, lon, distance, hint }
+ *                     booleans                                      default: all true
  *   autoRotate        boolean                                       default: true
  *   showClouds        boolean                                       default: true
  *   showAtmosphere    boolean                                       default: true
@@ -44,6 +47,7 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
     language       = 'zh',
     strings: stringsOverride,
     controls: controlsOverride,
+    infoCard: infoCardOverride,
     autoRotate     = true,
     showClouds     = true,
     showAtmosphere = true,
@@ -60,6 +64,7 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
 
   const t        = useMemo(() => resolveStrings(language, stringsOverride), [language, stringsOverride]);
   const controls = useMemo(() => resolveControls(controlsOverride),         [controlsOverride]);
+  const infoCard = useMemo(() => resolveInfoCard(infoCardOverride),         [infoCardOverride]);
   const panels   = useMemo(() => resolvePanels(ui, panelsOverride),         [ui, panelsOverride]);
   const anyPanel = panels.title || panels.info || panels.bottomBar;
 
@@ -136,6 +141,7 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
           panels={panels}
           strings={t}
           controls={controls}
+          infoCard={infoCard}
           toggles={toggles}
           onToggle={(k) => setToggles(s => ({ ...s, [k]: !s[k] }))}
           onReset={()    => sceneRef.current?.reset()}

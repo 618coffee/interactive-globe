@@ -3,8 +3,10 @@ import {
   STRINGS,
   resolveStrings,
   resolveControls,
+  resolveInfoCard,
   resolvePanels,
   DEFAULT_CONTROLS,
+  DEFAULT_INFO_CARD,
 } from '../strings.js';
 
 describe('strings module', () => {
@@ -72,6 +74,21 @@ describe('strings module', () => {
       expect(result.clouds).toBe(false);
       expect(result.reset).toBe(true);
       expect(result.autoRotate).toBe(true);
+    });
+  });
+
+  describe('resolveInfoCard', () => {
+    it('returns all-true by default', () => {
+      expect(resolveInfoCard()).toEqual(DEFAULT_INFO_CARD);
+    });
+
+    it('layers overrides on top of all-true defaults', () => {
+      const result = resolveInfoCard({ lat: false, lon: false });
+      expect(result.lat).toBe(false);
+      expect(result.lon).toBe(false);
+      expect(result.view).toBe(true);
+      expect(result.distance).toBe(true);
+      expect(result.hint).toBe(true);
     });
   });
 

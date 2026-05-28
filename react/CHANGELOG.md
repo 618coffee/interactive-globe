@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-05-28
+
+### Added
+- **`infoCard` prop** — per-row visibility inside the top-right info card.
+  Same shape as `controls`: `{ view, lat, lon, distance, hint }` booleans,
+  omitted keys default to `true`. Setting every row to `false` collapses
+  the card the same way `panels.info: false` does. `panels.info: false`
+  still wins as a coarse switch — `infoCard` is only consulted while the
+  card itself is showing.
+- Hint footer auto-strips its top divider when every row above it is
+  hidden (so a hint-only card doesn't render an orphaned border).
+- Example app exposes a new "Info card rows" group with five checkboxes
+  so you can see each row toggle live.
+
+### Notes
+- New `InfoCardConfig` exported from the type declarations.
+- 8 new tests cover row-level visibility, full-card collapse, hint-only
+  rendering, and `panels.info: false` precedence (62 tests total).
+
 ## [0.3.1] - 2026-05-28
 
 ### Fixed
@@ -110,7 +129,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Hand-written TypeScript declarations (`index.d.ts`).
 - MIT license.
 
-[Unreleased]: https://github.com/618coffee/interactive-globe/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/618coffee/interactive-globe/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/618coffee/interactive-globe/releases/tag/v0.4.0
 [0.3.1]: https://github.com/618coffee/interactive-globe/releases/tag/v0.3.1
 [0.3.0]: https://github.com/618coffee/interactive-globe/releases/tag/v0.3.0
 [0.2.0]: https://github.com/618coffee/interactive-globe/releases/tag/v0.2.0

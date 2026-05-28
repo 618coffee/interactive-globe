@@ -27,13 +27,24 @@ export default function App() {
   const [iconOnly,   setIconOnly]   = useState(false);
   const [autoRotate, setAutoRotate] = useState(true);
 
+  // Per-row visibility inside the top-right info card
+  const [showView, setShowView]         = useState(true);
+  const [showLat,  setShowLat]          = useState(true);
+  const [showLon,  setShowLon]          = useState(true);
+  const [showDist, setShowDist]         = useState(true);
+  const [showHint, setShowHint]         = useState(true);
+
   const labels = {
     zh: { title: '配置 · 实时切换', flyTo: '飞往', clicked: '已选 POI', langLabel: '语言',
           panelsLabel: '面板', iconOnlyLabel: '按钮仅图标', autoLabel: '自动旋转',
-          title_t: '标题', info_t: '信息卡', bar_t: '底栏' },
+          title_t: '标题', info_t: '信息卡', bar_t: '底栏',
+          infoRowsLabel: '信息卡内容',
+          view_r: '视图', lat_r: '纬度', lon_r: '经度', dist_r: '距离', hint_r: '提示' },
     en: { title: 'Config · live toggles',  flyTo: 'Fly to', clicked: 'Clicked POI', langLabel: 'Language',
           panelsLabel: 'Panels', iconOnlyLabel: 'Icon-only buttons', autoLabel: 'Auto-rotate',
-          title_t: 'Title', info_t: 'Info card', bar_t: 'Bottom bar' },
+          title_t: 'Title', info_t: 'Info card', bar_t: 'Bottom bar',
+          infoRowsLabel: 'Info card rows',
+          view_r: 'View', lat_r: 'Lat', lon_r: 'Lon', dist_r: 'Distance', hint_r: 'Hint' },
   }[language];
 
   return (
@@ -43,6 +54,10 @@ export default function App() {
         language={language}
         autoRotate={autoRotate}
         panels={{ title: showTitle, info: showInfo, bottomBar: showBar }}
+        infoCard={{
+          view: showView, lat: showLat, lon: showLon,
+          distance: showDist, hint: showHint,
+        }}
         strings={iconOnly ? ICON_ONLY_OVERRIDES : undefined}
         onPoiClick={(poi) => setLastClick(poi)}
       />
@@ -63,6 +78,15 @@ export default function App() {
           <Toggle label={labels.title_t} value={showTitle} onChange={setShowTitle} />
           <Toggle label={labels.info_t}  value={showInfo}  onChange={setShowInfo} />
           <Toggle label={labels.bar_t}   value={showBar}   onChange={setShowBar} />
+        </div>
+
+        <div className="row-group">
+          <div className="side-title-sm">{labels.infoRowsLabel}</div>
+          <Toggle label={labels.view_r} value={showView} onChange={setShowView} />
+          <Toggle label={labels.lat_r}  value={showLat}  onChange={setShowLat} />
+          <Toggle label={labels.lon_r}  value={showLon}  onChange={setShowLon} />
+          <Toggle label={labels.dist_r} value={showDist} onChange={setShowDist} />
+          <Toggle label={labels.hint_r} value={showHint} onChange={setShowHint} />
         </div>
 
         <Toggle label={labels.iconOnlyLabel} value={iconOnly}   onChange={setIconOnly} />

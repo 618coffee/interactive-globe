@@ -54,6 +54,7 @@ export function GlobeUI({
   panels,
   strings,
   controls,
+  infoCard,
   toggles,
   onToggle,
   onReset,
@@ -69,6 +70,10 @@ export function GlobeUI({
   const showDivider = showAction && showToggle;
   const showBar = panels.bottomBar && (showAction || showToggle);
 
+  const anyInfoRow = infoCard.view || infoCard.lat || infoCard.lon || infoCard.distance;
+  const hintVisible = infoCard.hint && (strings.hintLine1 || strings.hintLine2);
+  const showInfoCard = panels.info && (anyInfoRow || hintVisible);
+
   return (
     <>
       {panels.title && (
@@ -81,15 +86,23 @@ export function GlobeUI({
         </div>
       )}
 
-      {panels.info && (
+      {showInfoCard && (
         <div className="ig-top-right ig-glass">
-          <div className="ig-info-row ig-eyebrow ig-spread">
-            <span>{strings.view}</span><span>{info.level}</span>
-          </div>
-          <div className="ig-info-row ig-spread"><span className="ig-dim">{strings.lat}</span><span className="ig-num">{info.lat.toFixed(2)}°</span></div>
-          <div className="ig-info-row ig-spread"><span className="ig-dim">{strings.lon}</span><span className="ig-num">{info.lon.toFixed(2)}°</span></div>
-          <div className="ig-info-row ig-spread"><span className="ig-dim">{strings.distance}</span><span className="ig-num">{info.dist.toFixed(2)}</span></div>
-          {(strings.hintLine1 || strings.hintLine2) && (
+          {infoCard.view && (
+            <div className="ig-info-row ig-eyebrow ig-spread">
+              <span>{strings.view}</span><span>{info.level}</span>
+            </div>
+          )}
+          {infoCard.lat && (
+            <div className="ig-info-row ig-spread"><span className="ig-dim">{strings.lat}</span><span className="ig-num">{info.lat.toFixed(2)}°</span></div>
+          )}
+          {infoCard.lon && (
+            <div className="ig-info-row ig-spread"><span className="ig-dim">{strings.lon}</span><span className="ig-num">{info.lon.toFixed(2)}°</span></div>
+          )}
+          {infoCard.distance && (
+            <div className="ig-info-row ig-spread"><span className="ig-dim">{strings.distance}</span><span className="ig-num">{info.dist.toFixed(2)}</span></div>
+          )}
+          {hintVisible && (
             <div className="ig-hint">
               {strings.hintLine1}
               {strings.hintLine1 && strings.hintLine2 && <br/>}

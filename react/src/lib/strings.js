@@ -63,6 +63,21 @@ export function resolveControls(overrides) {
   return overrides ? { ...DEFAULT_CONTROLS, ...overrides } : DEFAULT_CONTROLS;
 }
 
+// Per-row visibility inside the top-right info card. Omitted keys
+// default to `true`. Setting them all to false collapses the card the
+// same way `panels.info: false` does.
+export const DEFAULT_INFO_CARD = {
+  view:     true,
+  lat:      true,
+  lon:      true,
+  distance: true,
+  hint:     true,
+};
+
+export function resolveInfoCard(overrides) {
+  return overrides ? { ...DEFAULT_INFO_CARD, ...overrides } : DEFAULT_INFO_CARD;
+}
+
 // Top-level panel visibility. `ui` ('full' | 'minimal' | 'none') sets the
 // baseline; the `panels` prop overrides individual entries on top.
 const UI_PRESETS = {

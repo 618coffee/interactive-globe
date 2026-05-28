@@ -112,6 +112,24 @@ export interface PanelsConfig {
   bottomBar?: boolean;
 }
 
+/**
+ * Per-row visibility inside the top-right info card. Omitted keys
+ * default to `true`. Setting them all to false collapses the card the
+ * same way `panels.info: false` does.
+ */
+export interface InfoCardConfig {
+  /** Top "VIEW / Lx" row. */
+  view?: boolean;
+  /** Latitude readout. */
+  lat?: boolean;
+  /** Longitude readout. */
+  lon?: boolean;
+  /** Camera distance readout. */
+  distance?: boolean;
+  /** Two-line hint footer ("drag to rotate · scroll to zoom" / "pinch on trackpad"). */
+  hint?: boolean;
+}
+
 // ----------------------------------------------------------------------------
 // Scene class (framework-agnostic)
 // ----------------------------------------------------------------------------
@@ -193,6 +211,8 @@ export interface InteractiveGlobeProps {
   strings?: Partial<UIStrings>;
   /** Per-button visibility in the bottom bar. Omitted keys default to `true`. */
   controls?: BottomControlsConfig;
+  /** Per-row visibility inside the top-right info card. Omitted keys default to `true`. */
+  infoCard?: InfoCardConfig;
   autoRotate?: boolean;
   showClouds?: boolean;
   showAtmosphere?: boolean;
