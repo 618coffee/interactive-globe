@@ -117,8 +117,6 @@ export class GlobeScene {
     this._rafId    = null;
     this._tmpVec   = new THREE.Vector3();
     this._tmpNor   = new THREE.Vector3();
-    this._sunOff   = new THREE.Vector3();
-    this._yAxis    = new THREE.Vector3(0, 1, 0);
 
     this._initRenderer();
     this._initScene();
@@ -167,10 +165,7 @@ export class GlobeScene {
     this.stars = makeStars();
     this.scene.add(this.stars);
 
-    this.sun = new THREE.DirectionalLight(0xfff5e6, 1.6);
-    this.sun.position.set(5, 2, 3);
-    this.scene.add(this.sun);
-    this.scene.add(new THREE.AmbientLight(0xb8c8e0, 1.0));
+    this.scene.add(new THREE.AmbientLight(0xdfe9f5, 2.6));
   }
 
   _initEarth() {
@@ -231,7 +226,7 @@ export class GlobeScene {
           uniform vec3 glowColor;
           void main() {
             float f = pow(1.0 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 3.0);
-            gl_FragColor = vec4(glowColor, 1.0) * f;
+            gl_FragColor = vec4(glowColor, 1.0) * f * 0.6;
           }`,
         side: THREE.BackSide,
         blending: THREE.AdditiveBlending,
@@ -253,7 +248,7 @@ export class GlobeScene {
         uTime:        { value: 0 },
         uColorLow:    { value: new THREE.Color(0x3affb0) }, // oxygen green
         uColorHigh:   { value: new THREE.Color(0xff6da8) }, // upper-altitude pink-red
-        uIntensity:   { value: 1.4 },
+        uIntensity:   { value: 0.8 },
       },
       vertexShader: `
         varying vec2 vUv;
@@ -572,10 +567,6 @@ export class GlobeScene {
     const t  = this._clock.elapsedTime;
 
     if (this.options.showClouds) this.clouds.rotation.y += dt * 0.012;
-
-    // Sun tracks the camera so the visible hemisphere stays lit.
-    this._sunOff.copy(this.camera.position).applyAxisAngle(this._yAxis, 0.35);
-    this.sun.position.copy(this._sunOff);
 
     // Drive the aurora curtain animation.
     this.auroraMat.uniforms.uTime.value = t;
