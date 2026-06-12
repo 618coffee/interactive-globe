@@ -69,6 +69,10 @@ export default function App() {
         ref={globe}
         language={language}
         autoRotate={autoRotate}
+        textures={{
+          day:    '/textures/earth-blue-marble-8k.jpg',  // NASA Blue Marble Next Gen, 8192×4096 (local)
+          clouds: '/textures/earth-clouds-2k.jpg',        // NASA cloud composite, 2048×1024 (local)
+        }}
         panels={{ title: showTitle, info: showInfo, bottomBar: showBar }}
         infoCard={{
           view: showView, lat: showLat, lon: showLon,
