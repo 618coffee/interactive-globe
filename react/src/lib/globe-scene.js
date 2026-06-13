@@ -198,7 +198,7 @@ export class GlobeScene {
         specular: new THREE.Color(0x3a4a66), shininess: 22,
         emissive: new THREE.Color(0x12365c),
         emissiveMap: specTex,
-        emissiveIntensity: 0.55,
+        emissiveIntensity: 0.75,
       })
     );
     this.scene.add(this.earth);
