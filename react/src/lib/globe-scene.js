@@ -39,25 +39,37 @@ function resolveEasing(easing) {
   return EASINGS[easing] || EASINGS.easeOutCubic;
 }
 
-function makeMarkerTexture() {
+// Parse '#rrggbb' to an {r,g,b} byte triple.
+function hexToRgb(hex) {
+  const n = parseInt(hex.slice(1), 16);
+  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+}
+const rgba = ({ r, g, b }, a) => `rgba(${r}, ${g}, ${b}, ${a})`;
+
+// Radial marker sprite. `palette` = { color, highlight, core }; defaults keep
+// the original cyan look so dark mode is unchanged.
+function makeMarkerTexture(palette = { color: '#8cebff', highlight: '#beffff', core: '#dcfaff' }) {
+  const base = hexToRgb(palette.color);
+  const hi   = hexToRgb(palette.highlight);
+  const core = hexToRgb(palette.core);
   const size = 128;
   const c = document.createElement('canvas');
   c.width = c.height = size;
   const ctx = c.getContext('2d');
   const cx = size / 2, cy = size / 2;
-  ctx.strokeStyle = 'rgba(140, 235, 255, 0.95)';
+  ctx.strokeStyle = rgba(base, 0.95);
   ctx.lineWidth = 3;
   ctx.beginPath(); ctx.arc(cx, cy, 38, 0, Math.PI * 2); ctx.stroke();
-  ctx.strokeStyle = 'rgba(140, 235, 255, 0.55)';
+  ctx.strokeStyle = rgba(base, 0.55);
   ctx.lineWidth = 2;
   ctx.beginPath(); ctx.arc(cx, cy, 22, 0, Math.PI * 2); ctx.stroke();
   const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, 18);
-  g.addColorStop(0,   'rgba(190, 250, 255, 0.95)');
-  g.addColorStop(0.5, 'rgba(140, 235, 255, 0.40)');
-  g.addColorStop(1,   'rgba(140, 235, 255, 0.00)');
+  g.addColorStop(0,   rgba(hi,   0.95));
+  g.addColorStop(0.5, rgba(base, 0.40));
+  g.addColorStop(1,   rgba(base, 0.00));
   ctx.fillStyle = g;
   ctx.beginPath(); ctx.arc(cx, cy, 18, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = 'rgba(220, 250, 255, 1)';
+  ctx.fillStyle = rgba(core, 1);
   ctx.beginPath(); ctx.arc(cx, cy, 5, 0, Math.PI * 2); ctx.fill();
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
