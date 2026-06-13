@@ -10,6 +10,9 @@ export default defineConfig({
     outDir: 'dist',
     emptyOutDir: true,
     sourcemap: true,
+    // Textures in public/ are served to consumers via jsDelivr-gh (see
+    // DEFAULT_TEXTURES), not bundled — keep the npm tarball small.
+    copyPublicDir: false,
     lib: {
       entry: 'src/lib/index.js',
       formats: ['es', 'cjs'],
