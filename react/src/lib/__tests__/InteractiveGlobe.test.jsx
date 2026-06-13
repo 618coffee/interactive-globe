@@ -548,3 +548,30 @@ describe('loader text', () => {
     await waitFor(() => expect(container.querySelector('.ig-loader')).toBeNull());
   });
 });
+
+// ==================================================================
+// theme prop
+// ==================================================================
+describe('theme prop', () => {
+  it('defaults to dark: forwards theme:"dark" to the scene and data-theme on root', async () => {
+    const { container } = await renderAndLoad(<InteractiveGlobe />);
+    expect(sceneInstances[0].options.theme).toBe('dark');
+    expect(container.querySelector('.ig-root').getAttribute('data-theme')).toBe('dark');
+  });
+
+  it('passes theme="light" into the scene options and onto the root', async () => {
+    const { container } = await renderAndLoad(<InteractiveGlobe theme="light" />);
+    expect(sceneInstances[0].options.theme).toBe('light');
+    expect(container.querySelector('.ig-root').getAttribute('data-theme')).toBe('light');
+  });
+
+  it('forwards a live theme change through setOptions', async () => {
+    const { rerender, container } = render(<InteractiveGlobe theme="dark" />);
+    await waitFor(() => expect(container.querySelector('.ig-loader')).toBeNull());
+    rerender(<InteractiveGlobe theme="light" />);
+    await waitFor(() =>
+      expect(sceneInstances[0].calls.setOptions).toContainEqual({ theme: 'light' }),
+    );
+    expect(container.querySelector('.ig-root').getAttribute('data-theme')).toBe('light');
+  });
+});
