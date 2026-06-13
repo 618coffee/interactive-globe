@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { resolveTheme } from './theme.js';
 
 // Real NASA Blue Marble Next Gen day map (8192×4096) + NASA cloud composite
 // (2048×1024), committed in this repo and served with CORS via jsDelivr-gh so the
@@ -138,6 +139,7 @@ export class GlobeScene {
       showLabels: true,
       showMarkers: true,
       exposure: 1.4,
+      theme: 'dark',
       onReady: null,
       onLoad: null,
       onPoiClick: null,
@@ -151,6 +153,8 @@ export class GlobeScene {
     this._rafId    = null;
     this._tmpVec   = new THREE.Vector3();
     this._tmpNor   = new THREE.Vector3();
+
+    this._theme = resolveTheme(this.options.theme);
 
     this._initRenderer();
     this._initScene();
@@ -178,7 +182,7 @@ export class GlobeScene {
 
   _initScene() {
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x000208);
+    this.scene.background = new THREE.Color(this._theme.background);
 
     const w = this.canvas.clientWidth || 1;
     const h = this.canvas.clientHeight || 1;
@@ -200,6 +204,7 @@ export class GlobeScene {
 
     this.stars = makeStars();
     this.scene.add(this.stars);
+    this.stars.visible = this._theme.showStars;
 
     this.scene.add(new THREE.AmbientLight(0xdfe9f5, 2.6));
   }
@@ -382,7 +387,7 @@ export class GlobeScene {
   }
 
   _initMarkers() {
-    this.markerTex = makeMarkerTexture();
+    this.markerTex = makeMarkerTexture(this._theme.marker);
     this.markers = new THREE.Group();
     this.markerMeshes = [];
     this.setPois(this.options.pois);
@@ -457,7 +462,10 @@ export class GlobeScene {
       const mat = new THREE.MeshBasicMaterial({
         map: this.markerTex,
         transparent: true, depthWrite: false,
-        blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+        blending: this._theme.marker.blending === 'normal'
+          ? THREE.NormalBlending
+          : THREE.AdditiveBlending,
+        side: THREE.DoubleSide,
       });
       const m = new THREE.Mesh(new THREE.PlaneGeometry(0.06, 0.06), mat);
       m.position.copy(pos);
