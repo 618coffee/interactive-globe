@@ -442,9 +442,21 @@ export class GlobeScene {
     if ('autoRotate'   in partial) this.controls.autoRotate = partial.autoRotate;
     if ('enableZoom'   in partial) this.controls.enableZoom = partial.enableZoom;
     if ('enableRotate' in partial) this.controls.enableRotate = partial.enableRotate;
+    if ('theme' in partial) this._applyTheme(partial.theme);
     if ('pois'   in partial) this.setPois(partial.pois);
+    else if ('theme' in partial) this.setPois(this.options.pois); // rebuild markers in new palette
     if ('labels' in partial) this.setLabels(partial.labels);
     this._applyVisibility();
+  }
+
+  // Re-resolve the theme and apply the parts that live outside _applyVisibility:
+  // sky color and the marker sprite palette. Marker meshes are rebuilt by the
+  // setPois call in setOptions (so their blending updates too).
+  _applyTheme(theme) {
+    this._theme = resolveTheme(theme);
+    if (this.scene) this.scene.background = new THREE.Color(this._theme.background);
+    if (this.markerTex) this.markerTex.dispose();
+    this.markerTex = makeMarkerTexture(this._theme.marker);
   }
 
   setPois(pois) {
@@ -583,9 +595,12 @@ export class GlobeScene {
   _applyVisibility() {
     this.clouds.visible      = this.options.showClouds;
     this.markers.visible     = this.options.showMarkers;
-    this.atmosphere.visible  = this.options.showAtmosphere;
-    this.auroraNorth.visible = this.options.showAurora;
-    this.auroraSouth.visible = this.options.showAurora;
+    // The theme can force additive-blended layers off (they wash out on a
+    // light sky); a consumer's explicit show* still applies within the theme.
+    this.atmosphere.visible  = this.options.showAtmosphere && this._theme.showAtmosphere;
+    this.auroraNorth.visible = this.options.showAurora && this._theme.showAurora;
+    this.auroraSouth.visible = this.options.showAurora && this._theme.showAurora;
+    this.stars.visible       = this._theme.showStars;
     // labels handled per-frame via showLabels
   }
 
