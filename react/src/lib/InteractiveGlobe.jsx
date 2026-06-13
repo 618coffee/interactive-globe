@@ -50,6 +50,8 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
     controls: controlsOverride,
     infoCard: infoCardOverride,
     autoRotate     = true,
+    enableZoom     = true,
+    enableRotate   = true,
     showClouds     = true,
     showAtmosphere = true,
     showAurora     = true,
@@ -82,7 +84,8 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
   useEffect(() => {
     const sceneOpts = {
       pois, labels,
-      autoRotate, showClouds, showAtmosphere, showAurora, showLabels, showMarkers,
+      autoRotate, enableZoom, enableRotate,
+      showClouds, showAtmosphere, showAurora, showLabels, showMarkers,
       exposure,
       onReady: (api) => { if (onReady) onReady(api); },
       onLoad:  () => { setLoaded(true); if (onLoad) onLoad(); },
@@ -99,6 +102,8 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
   useEffect(() => { sceneRef.current?.setOptions({ pois }); }, [pois]);
   useEffect(() => { sceneRef.current?.setOptions({ labels }); }, [labels]);
   useEffect(() => { sceneRef.current?.setOptions({ exposure }); }, [exposure]);
+  useEffect(() => { sceneRef.current?.setOptions({ enableZoom }); }, [enableZoom]);
+  useEffect(() => { sceneRef.current?.setOptions({ enableRotate }); }, [enableRotate]);
   useEffect(() => { sceneRef.current?.setOptions({ autoRotate: toggles.autoRotate }); }, [toggles.autoRotate]);
   useEffect(() => { sceneRef.current?.setOptions({ showClouds: toggles.showClouds }); }, [toggles.showClouds]);
   useEffect(() => { sceneRef.current?.setOptions({ showAtmosphere: toggles.showAtmosphere }); }, [toggles.showAtmosphere]);

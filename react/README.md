@@ -72,6 +72,8 @@ All optional.
 | `controls`       | `{ reset, zoom, zoomIn, zoomOut, autoRotate, labels, markers, clouds, atmosphere, aurora }` (all booleans) | all `true` | Per-button visibility in the bottom bar. Omitted keys default to `true`. `zoom` is a convenience that toggles both `zoomIn` and `zoomOut` at once; explicit `zoomIn` / `zoomOut` still win. Hiding a button does **not** change scene state — pair with `showLabels` / `showClouds` etc. if you want the underlying layer off too. |
 | `infoCard`       | `{ view, lat, lon, distance, hint }` (all booleans) | all `true` | Per-row visibility inside the top-right info card. Hiding every row collapses the card entirely (same effect as `panels.info: false`). |
 | `autoRotate`     | `boolean`                             | `true`                 | |
+| `enableZoom`     | `boolean`                             | `true`                 | Wheel/pinch zoom of the camera. Set `false` so page scroll passes through the canvas instead of zooming the globe. |
+| `enableRotate`   | `boolean`                             | `true`                 | Pointer-drag rotation. Independent of `autoRotate` — set `false` to lock manual rotation while keeping the idle spin. |
 | `showClouds`     | `boolean`                             | `true`                 | |
 | `showAtmosphere` | `boolean`                             | `true`                 | Fresnel atmosphere glow. |
 | `showAurora`     | `boolean`                             | `true`                 | Animated polar-cap aurora rings (65°–78° N/S). Independent of `showAtmosphere`. |

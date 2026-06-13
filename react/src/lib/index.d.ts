@@ -162,6 +162,10 @@ export interface GlobeSceneOptions {
   pois?: POI[];
   labels?: LabelItem[];
   autoRotate?: boolean;
+  /** Allow wheel/pinch zoom of the camera. Default `true`. Set `false` so page scroll passes through the canvas. */
+  enableZoom?: boolean;
+  /** Allow pointer-drag rotation of the camera. Default `true`. (`autoRotate` is independent.) */
+  enableRotate?: boolean;
   showClouds?: boolean;
   showAtmosphere?: boolean;
   /** Polar-cap aurora rings (animated curtain shader at 65°–78° N/S). */
@@ -240,6 +244,10 @@ export interface InteractiveGlobeProps {
   /** Per-row visibility inside the top-right info card. Omitted keys default to `true`. */
   infoCard?: InfoCardConfig;
   autoRotate?: boolean;
+  /** Allow wheel/pinch zoom of the camera. Default `true`. Set `false` so page scroll passes through the canvas. */
+  enableZoom?: boolean;
+  /** Allow pointer-drag rotation of the camera. Default `true`. (`autoRotate` is independent.) */
+  enableRotate?: boolean;
   showClouds?: boolean;
   showAtmosphere?: boolean;
   /** Polar-cap aurora rings (animated curtain shader at 65°–78° N/S). */

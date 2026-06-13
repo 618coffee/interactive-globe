@@ -118,6 +118,8 @@ export class GlobeScene {
       pois: [],
       labels: [],
       autoRotate: true,
+      enableZoom: true,
+      enableRotate: true,
       showClouds: true,
       showAtmosphere: true,
       showAurora: true,
@@ -179,6 +181,8 @@ export class GlobeScene {
     this.controls.minDistance     = 1.25;
     this.controls.maxDistance     = 8;
     this.controls.enablePan       = false;
+    this.controls.enableZoom      = this.options.enableZoom;
+    this.controls.enableRotate    = this.options.enableRotate;
     this.controls.autoRotate      = this.options.autoRotate;
     this.controls.autoRotateSpeed = 0.35;
 
@@ -417,8 +421,10 @@ export class GlobeScene {
 
   setOptions(partial) {
     Object.assign(this.options, partial);
-    if ('exposure'   in partial) this.renderer.toneMappingExposure = partial.exposure;
-    if ('autoRotate' in partial) this.controls.autoRotate = partial.autoRotate;
+    if ('exposure'     in partial) this.renderer.toneMappingExposure = partial.exposure;
+    if ('autoRotate'   in partial) this.controls.autoRotate = partial.autoRotate;
+    if ('enableZoom'   in partial) this.controls.enableZoom = partial.enableZoom;
+    if ('enableRotate' in partial) this.controls.enableRotate = partial.enableRotate;
     if ('pois'   in partial) this.setPois(partial.pois);
     if ('labels' in partial) this.setLabels(partial.labels);
     this._applyVisibility();

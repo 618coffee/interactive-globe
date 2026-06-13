@@ -463,6 +463,28 @@ describe('initial scene construction', () => {
     expect(scene.options.exposure).toBe(2.0);
   });
 
+  it('forwards enableZoom / enableRotate to the scene constructor', async () => {
+    await renderAndLoad(<InteractiveGlobe enableZoom={false} enableRotate={false} />);
+    const scene = sceneInstances[0];
+    expect(scene.options.enableZoom).toBe(false);
+    expect(scene.options.enableRotate).toBe(false);
+  });
+
+  it('defaults enableZoom / enableRotate to true when omitted', async () => {
+    await renderAndLoad(<InteractiveGlobe />);
+    const scene = sceneInstances[0];
+    expect(scene.options.enableZoom).toBe(true);
+    expect(scene.options.enableRotate).toBe(true);
+  });
+
+  it('forwards enableZoom changes into scene.setOptions', async () => {
+    const { rerender } = await renderAndLoad(<InteractiveGlobe enableZoom />);
+    const scene = sceneInstances[0];
+    rerender(<InteractiveGlobe enableZoom={false} />);
+    const last = scene.calls.setOptions.filter(p => 'enableZoom' in p).pop();
+    expect(last.enableZoom).toBe(false);
+  });
+
   it('forwards custom pois and labels arrays', async () => {
     const pois = [{ name: 'X', lat: 0, lon: 0 }];
     const labels = [{ name: 'Y', lat: 0, lon: 0, type: 'city', lod: 2 }];

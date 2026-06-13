@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-06-13
+
+### Added
+- **`enableZoom` / `enableRotate` props** (both default `true`). `enableZoom={false}`
+  disables wheel/pinch zoom so page scroll passes through the canvas instead of
+  zooming the globe; `enableRotate={false}` locks pointer-drag rotation while
+  leaving `autoRotate` and `flyTo` untouched. Both forward live through
+  `setOptions` and are mirrored on `GlobeScene` (`OrbitControls.enableZoom` /
+  `.enableRotate`). New keys on `GlobeSceneOptions` and `InteractiveGlobeProps`.
+
+### Notes
+- 4 new tests: constructor forwarding (on + default), live `setOptions`
+  forwarding.
+
 ## [0.7.0] - 2026-06-13
 
 ### Added
