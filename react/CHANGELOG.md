@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-06-13
+
+### Added
+- **`flyTo` easing + duration.** `flyTo(lat, lon, distance?, opts?)` now takes an
+  optional `opts` object: `durationMs` (default `900`) and `easing` — one of
+  `'linear' | 'easeInCubic' | 'easeOutCubic' | 'easeInOutCubic'` or a custom
+  `(t: number) => number`. Defaults reproduce the previous behavior (900 ms,
+  ease-out-cubic), so existing callers are unaffected. New `EasingName` and
+  `FlyToOptions` types are exported.
+
+### Changed
+- **High-res default day map.** `DEFAULT_TEXTURES.day` now points at the real
+  NASA Blue Marble Next Gen texture (8192×4096) and `DEFAULT_TEXTURES.clouds` at
+  a NASA cloud composite (2048×1024), both committed in this repo and served
+  with CORS via jsDelivr-gh. The previous default was the ~2K three-globe
+  example image. Water/topology masks are unchanged. Pass the `textures` prop to
+  override (e.g. a smaller day map on memory-constrained devices).
+
+### Notes
+- `_tween` takes an easing function; `reset()` and `zoom()` keep ease-out-cubic.
+- 1 new test: `flyTo` forwards `{ durationMs, easing }` through the React handle.
+
 ## [0.6.0] - 2026-05-28
 
 ### Added

@@ -29,7 +29,7 @@ vi.mock('../globe-scene.js', () => ({
     setLabels(){}
     reset()    { this.calls.reset++; }
     zoom(f)    { this.calls.zoom.push(f); }
-    flyTo(lat, lon, d) { this.calls.flyTo.push([lat, lon, d]); }
+    flyTo(lat, lon, d, opts) { this.calls.flyTo.push([lat, lon, d, opts]); }
     getInfo()  { return { lat: 12.34, lon: -56.78, dist: 2.5, level: 'L2' }; }
     dispose()  {}
   },
@@ -392,7 +392,16 @@ describe('imperative ref API', () => {
     await renderAndLoad(<InteractiveGlobe ref={ref} />);
     const scene = sceneInstances[0];
     ref.current.flyTo(35.6762, 139.6503, 1.7);
-    expect(scene.calls.flyTo).toEqual([[35.6762, 139.6503, 1.7]]);
+    expect(scene.calls.flyTo).toEqual([[35.6762, 139.6503, 1.7, undefined]]);
+  });
+
+  it('ref.flyTo forwards the optional duration/easing options to scene.flyTo', async () => {
+    const ref = createRef();
+    await renderAndLoad(<InteractiveGlobe ref={ref} />);
+    const scene = sceneInstances[0];
+    const opts = { durationMs: 2600, easing: 'easeInOutCubic' };
+    ref.current.flyTo(31.3, 120.6, 1.7, opts);
+    expect(scene.calls.flyTo).toEqual([[31.3, 120.6, 1.7, opts]]);
   });
 
   it('ref.zoomIn / zoomOut call scene.zoom with the correct factors', async () => {

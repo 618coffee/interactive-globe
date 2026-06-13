@@ -119,7 +119,7 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
     reset:    () => sceneRef.current?.reset(),
     zoomIn:   () => sceneRef.current?.zoom(0.78),
     zoomOut:  () => sceneRef.current?.zoom(1.28),
-    flyTo:    (lat, lon, dist) => sceneRef.current?.flyTo(lat, lon, dist),
+    flyTo:    (lat, lon, dist, opts) => sceneRef.current?.flyTo(lat, lon, dist, opts),
     getInfo:  () => sceneRef.current?.getInfo(),
     getScene: () => sceneRef.current,
   }), []);

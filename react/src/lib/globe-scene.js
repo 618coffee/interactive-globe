@@ -1,12 +1,17 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-// 8K NASA Blue Marble textures (three-globe CDN) + clouds from three.js examples.
+// Real NASA Blue Marble Next Gen day map (8192×4096) + NASA cloud composite
+// (2048×1024), committed in this repo and served with CORS via jsDelivr-gh so the
+// published package ships a high-res globe by default. The water/topology masks
+// stay on the three-globe CDN. Override any of these through the `textures` prop.
+const TEXTURE_BASE =
+  'https://cdn.jsdelivr.net/gh/618coffee/interactive-globe@v0.7.0/react/public/textures';
 const DEFAULT_TEXTURES = {
-  day:    'https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg',
+  day:    `${TEXTURE_BASE}/earth-blue-marble-8k.jpg`,
   spec:   'https://unpkg.com/three-globe/example/img/earth-water.png',
   bump:   'https://unpkg.com/three-globe/example/img/earth-topology.png',
-  clouds: 'https://threejs.org/examples/textures/planets/earth_clouds_1024.png',
+  clouds: `${TEXTURE_BASE}/earth-clouds-2k.jpg`,
 };
 
 function latLonToVec3(lat, lon, r = 1) {
@@ -17,6 +22,21 @@ function latLonToVec3(lat, lon, r = 1) {
      r * Math.cos(phi),
      r * Math.sin(phi) * Math.sin(theta)
   );
+}
+
+// Named easing curves for camera tweens. Each maps a normalized time t in
+// [0,1] to an eased progress in [0,1]. `flyTo` accepts any of these keys or a
+// custom function.
+const EASINGS = {
+  linear:         (t) => t,
+  easeInCubic:    (t) => t * t * t,
+  easeOutCubic:   (t) => 1 - Math.pow(1 - t, 3),
+  easeInOutCubic: (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2),
+};
+
+function resolveEasing(easing) {
+  if (typeof easing === 'function') return easing;
+  return EASINGS[easing] || EASINGS.easeOutCubic;
 }
 
 function makeMarkerTexture() {
@@ -475,10 +495,17 @@ export class GlobeScene {
    * @param {number} lat
    * @param {number} lon
    * @param {number} [distance=1.8]
+   * @param {{ durationMs?: number, easing?: ('linear'|'easeInCubic'|'easeOutCubic'|'easeInOutCubic'|((t:number)=>number)) }} [opts]
+   *   `durationMs` defaults to 900; `easing` defaults to `'easeOutCubic'`.
    */
-  flyTo(lat, lon, distance = 1.8) {
+  flyTo(lat, lon, distance = 1.8, opts = {}) {
+    const { durationMs = 900, easing = 'easeOutCubic' } = opts;
     const target = latLonToVec3(lat, lon, distance);
-    this._tween(this.camera.position.clone(), target, this.controls.target.clone(), new THREE.Vector3(0,0,0), 900);
+    this._tween(
+      this.camera.position.clone(), target,
+      this.controls.target.clone(), new THREE.Vector3(0, 0, 0),
+      durationMs, easing,
+    );
     this.controls.autoRotate = false;
     this.options.autoRotate  = false;
   }
@@ -536,12 +563,13 @@ export class GlobeScene {
     // labels handled per-frame via showLabels
   }
 
-  _tween(sPos, ePos, sTar, eTar, dur) {
+  _tween(sPos, ePos, sTar, eTar, dur, easing) {
+    const ease = resolveEasing(easing);
     const t0 = performance.now();
     const step = (t) => {
       if (this._disposed) return;
       const u = Math.min(1, (t - t0) / dur);
-      const e = 1 - Math.pow(1 - u, 3);
+      const e = ease(u);
       this.camera.position.lerpVectors(sPos, ePos, e);
       if (sTar && eTar) this.controls.target.lerpVectors(sTar, eTar, e);
       if (u < 1) requestAnimationFrame(step);

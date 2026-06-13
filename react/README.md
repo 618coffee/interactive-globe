@@ -102,14 +102,19 @@ const globe = useRef(null);
 |---------------------------------------|-------------|
 | `reset()`                             | Animate camera back to the default view. |
 | `zoomIn()` / `zoomOut()`              | Smoothly step the dolly distance. |
-| `flyTo(lat, lon, dist?)`              | Animate camera to a lat/lon at the given distance (default 1.8). Disables auto-rotate. |
+| `flyTo(lat, lon, dist?, opts?)`       | Animate camera to a lat/lon at the given distance (default 1.8). Disables auto-rotate. `opts` = `{ durationMs?, easing? }` — `durationMs` defaults to 900; `easing` is `'linear' \| 'easeInCubic' \| 'easeOutCubic' \| 'easeInOutCubic'` or a custom `(t) => number` (default `'easeOutCubic'`). |
 | `getInfo()`                           | Returns `{ lat, lon, dist, level }` for the current camera. |
 | `getScene()`                          | Returns the underlying `GlobeScene` instance for advanced use. |
+
+```jsx
+// Slow, cinematic ease-in-out fly
+globe.current?.flyTo(31.2990, 120.5853, 1.7, { durationMs: 2600, easing: 'easeInOutCubic' });
+```
 
 ## Notes
 
 - The component opens a WebGL context, a render loop, and DOM nodes inside its wrapper. On unmount it disposes all of them cleanly (safe inside React StrictMode and routed pages).
-- Default textures load from `unpkg.com` (8K Blue Marble) and `threejs.org` (clouds). For offline / self-hosted use, copy those assets and pass URLs via the `textures` prop.
+- The default day map is a real NASA Blue Marble Next Gen texture (8192×4096) and the clouds are a NASA composite (2048×1024), both served with CORS via jsDelivr from this repo; the water/topology masks load from `unpkg.com`. For offline / self-hosted use, copy those assets and pass URLs via the `textures` prop.
 - Sizing is tracked with `ResizeObserver`, so the canvas reflows correctly when its container resizes (not just on window resize).
 
 ---

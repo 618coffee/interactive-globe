@@ -55,6 +55,21 @@ export interface GlobeInfo {
   level: 'L0' | 'L1' | 'L2' | 'L3';
 }
 
+/** Built-in easing-curve names accepted by {@link FlyToOptions.easing}. */
+export type EasingName = 'linear' | 'easeInCubic' | 'easeOutCubic' | 'easeInOutCubic';
+
+/** Options for {@link InteractiveGlobeHandle.flyTo} / {@link GlobeScene.flyTo}. */
+export interface FlyToOptions {
+  /** Animation duration in milliseconds. Default `900`. */
+  durationMs?: number;
+  /**
+   * Easing curve: a built-in {@link EasingName} or a custom function mapping a
+   * normalized time `t` in `[0,1]` to eased progress in `[0,1]`.
+   * Default `'easeOutCubic'`.
+   */
+  easing?: EasingName | ((t: number) => number);
+}
+
 // ----------------------------------------------------------------------------
 // UI configuration: language + per-button visibility
 // ----------------------------------------------------------------------------
@@ -183,7 +198,7 @@ export class GlobeScene {
   reset(): void;
   zoom(factor: number): void;
   /** Smoothly fly the camera to a lat/lon. Disables auto-rotate. */
-  flyTo(lat: number, lon: number, distance?: number): void;
+  flyTo(lat: number, lon: number, distance?: number, opts?: FlyToOptions): void;
   getInfo(): GlobeInfo;
 
   /** Tear down WebGL context, controls, observers, and label DOM. */
@@ -198,7 +213,7 @@ export interface InteractiveGlobeHandle {
   reset(): void;
   zoomIn(): void;
   zoomOut(): void;
-  flyTo(lat: number, lon: number, dist?: number): void;
+  flyTo(lat: number, lon: number, dist?: number, opts?: FlyToOptions): void;
   getInfo(): GlobeInfo | undefined;
   getScene(): GlobeScene | null;
 }
