@@ -14,7 +14,7 @@ describe('resolveTheme', () => {
     expect(d.showAtmosphere).toBe(true);
     expect(d.showAurora).toBe(true);
     expect(d.marker.color).toBe('#8cebff');
-    expect(d.marker.highlight).toBe('#beffff');
+    expect(d.marker.highlight).toBe('#befaff');
     expect(d.marker.core).toBe('#dcfaff');
     expect(d.marker.blending).toBe('additive');
   });

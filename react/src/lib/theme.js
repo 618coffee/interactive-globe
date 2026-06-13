@@ -10,7 +10,7 @@ const PRESETS = {
     showStars: true,
     showAtmosphere: true,
     showAurora: true,
-    marker: { color: '#8cebff', highlight: '#beffff', core: '#dcfaff', blending: 'additive' },
+    marker: { color: '#8cebff', highlight: '#befaff', core: '#dcfaff', blending: 'additive' },
   },
   light: {
     background: 0xf9fafb,

@@ -48,7 +48,7 @@ const rgba = ({ r, g, b }, a) => `rgba(${r}, ${g}, ${b}, ${a})`;
 
 // Radial marker sprite. `palette` = { color, highlight, core }; defaults keep
 // the original cyan look so dark mode is unchanged.
-function makeMarkerTexture(palette = { color: '#8cebff', highlight: '#beffff', core: '#dcfaff' }) {
+function makeMarkerTexture(palette = { color: '#8cebff', highlight: '#befaff', core: '#dcfaff' }) {
   const base = hexToRgb(palette.color);
   const hi   = hexToRgb(palette.highlight);
   const core = hexToRgb(palette.core);
