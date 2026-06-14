@@ -575,3 +575,37 @@ describe('theme prop', () => {
     expect(container.querySelector('.ig-root').getAttribute('data-theme')).toBe('light');
   });
 });
+
+// ==================================================================
+// themeColors prop (caller-provided color overrides)
+// ==================================================================
+describe('themeColors prop', () => {
+  it('passes themeColors into the initial scene options', async () => {
+    await renderAndLoad(<InteractiveGlobe theme="light" themeColors={{ background: '#f4efe7' }} />);
+    expect(sceneInstances[0].options.themeColors).toEqual({ background: '#f4efe7' });
+  });
+
+  it('forwards a live themeColors change through setOptions', async () => {
+    const { rerender, container } = render(
+      <InteractiveGlobe theme="light" themeColors={{ background: '#f4efe7' }} />,
+    );
+    await waitFor(() => expect(container.querySelector('.ig-loader')).toBeNull());
+    rerender(<InteractiveGlobe theme="light" themeColors={{ background: '#e9f1fa' }} />);
+    await waitFor(() =>
+      expect(sceneInstances[0].calls.setOptions).toContainEqual({ themeColors: { background: '#e9f1fa' } }),
+    );
+  });
+
+  it('does not re-forward themeColors when an equal object identity changes', async () => {
+    const { rerender, container } = render(
+      <InteractiveGlobe theme="light" themeColors={{ background: '#f4efe7' }} />,
+    );
+    await waitFor(() => expect(container.querySelector('.ig-loader')).toBeNull());
+    const before = sceneInstances[0].calls.setOptions.filter((c) => 'themeColors' in c).length;
+    // New object, identical content — should NOT trigger another themeColors setOptions.
+    rerender(<InteractiveGlobe theme="light" themeColors={{ background: '#f4efe7' }} />);
+    const after = sceneInstances[0].calls.setOptions.filter((c) => 'themeColors' in c).length;
+    expect(after).toBe(before);
+  });
+});
+

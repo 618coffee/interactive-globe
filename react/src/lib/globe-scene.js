@@ -154,7 +154,7 @@ export class GlobeScene {
     this._tmpVec   = new THREE.Vector3();
     this._tmpNor   = new THREE.Vector3();
 
-    this._theme = resolveTheme(this.options.theme);
+    this._theme = resolveTheme(this.options.theme, this.options.themeColors);
 
     this._initRenderer();
     this._initScene();
@@ -442,18 +442,21 @@ export class GlobeScene {
     if ('autoRotate'   in partial) this.controls.autoRotate = partial.autoRotate;
     if ('enableZoom'   in partial) this.controls.enableZoom = partial.enableZoom;
     if ('enableRotate' in partial) this.controls.enableRotate = partial.enableRotate;
-    if ('theme' in partial) this._applyTheme(partial.theme);
+    const themeChanged = 'theme' in partial || 'themeColors' in partial;
+    if (themeChanged) this._applyTheme();
     if ('pois'   in partial) this.setPois(partial.pois);
-    else if ('theme' in partial) this.setPois(this.options.pois); // rebuild markers in new palette
+    else if (themeChanged) this.setPois(this.options.pois); // rebuild markers in new palette
     if ('labels' in partial) this.setLabels(partial.labels);
     this._applyVisibility();
   }
 
-  // Re-resolve the theme and apply the parts that live outside _applyVisibility:
-  // sky color and the marker sprite palette. Marker meshes are rebuilt by the
-  // setPois call in setOptions (so their blending updates too).
-  _applyTheme(theme) {
-    this._theme = resolveTheme(theme);
+  // Re-resolve the theme (name + caller color overrides) and apply the parts
+  // that live outside _applyVisibility: sky color and the marker sprite palette.
+  // Marker meshes are rebuilt by the setPois call in setOptions (so their
+  // blending updates too). Reads from this.options so a themeColors-only change
+  // re-resolves correctly.
+  _applyTheme() {
+    this._theme = resolveTheme(this.options.theme, this.options.themeColors);
     if (this.scene) this.scene.background = new THREE.Color(this._theme.background);
     if (this.markerTex) this.markerTex.dispose();
     this.markerTex = makeMarkerTexture(this._theme.marker);

@@ -33,6 +33,7 @@ import './styles.css';
  *   showMarkers       boolean                                       default: true
  *   exposure          number (renderer tone-mapping exposure)       default: 1.4
  *   theme             'light' | 'dark' (light sky preset)           default: 'dark'
+ *   themeColors       { background?, marker? } color overrides       default: theme preset
  *   textures          { day, spec, bump, clouds } URL overrides     default: 8K Blue Marble
  *   className, style  forwarded to the wrapper div
  *   onReady(api), onLoad(), onPoiClick(poi)
@@ -60,6 +61,7 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
     showMarkers    = true,
     exposure       = 1.4,
     theme          = 'dark',
+    themeColors,
     textures,
     className      = '',
     style,
@@ -90,6 +92,7 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
       showClouds, showAtmosphere, showAurora, showLabels, showMarkers,
       exposure,
       theme,
+      themeColors,
       onReady: (api) => { if (onReady) onReady(api); },
       onLoad:  () => { setLoaded(true); if (onLoad) onLoad(); },
       onPoiClick,
@@ -106,6 +109,11 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
   useEffect(() => { sceneRef.current?.setOptions({ labels }); }, [labels]);
   useEffect(() => { sceneRef.current?.setOptions({ exposure }); }, [exposure]);
   useEffect(() => { sceneRef.current?.setOptions({ theme }); }, [theme]);
+  // Serialize the color overrides so an inline object literal from the caller
+  // doesn't re-run this (and rebuild the marker texture) on every render — only
+  // when the actual colors change.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { sceneRef.current?.setOptions({ themeColors }); }, [JSON.stringify(themeColors ?? null)]);
   useEffect(() => { sceneRef.current?.setOptions({ enableZoom }); }, [enableZoom]);
   useEffect(() => { sceneRef.current?.setOptions({ enableRotate }); }, [enableRotate]);
   useEffect(() => { sceneRef.current?.setOptions({ autoRotate: toggles.autoRotate }); }, [toggles.autoRotate]);
