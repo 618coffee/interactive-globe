@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { resolveTheme } from './theme.js';
+import { resolveGraticule } from './graticule.js';
 
 // Real NASA Blue Marble Next Gen day map (8192×4096) + NASA cloud composite
 // (2048×1024), committed in this repo and served with CORS via jsDelivr-gh so the
@@ -159,6 +160,7 @@ export class GlobeScene {
     this._initRenderer();
     this._initScene();
     this._initEarth();
+    this._initGraticule();
     this._initMarkers();
     this._initLabels();
     this._initInteraction();
@@ -383,7 +385,118 @@ export class GlobeScene {
     this.earth.add(this.auroraNorth);
     this.earth.add(this.auroraSouth);
 
-    this._textures = { dayTex, specTex, bumpTex, cloudTex };
+    // Cache decoded textures by URL so a later theme toggle that swaps the
+    // surface map can reuse an already-uploaded GPU texture (a synchronous
+    // reference swap, in the same frame as the sky change — no re-decode, no
+    // re-upload, no jank) instead of re-loading a multi-megabyte image every
+    // time. Seeded with the initial set so toggling back to it is instant too.
+    this._texCache = new Map([
+      [T.day, dayTex], [T.spec, specTex], [T.bump, bumpTex], [T.clouds, cloudTex],
+    ]);
+  }
+
+  // Live-swap the surface textures (e.g. when the theme toggles between the
+  // default Blue Marble and a caller-provided vintage map). Textures are cached
+  // by URL: a cache hit applies synchronously (same frame as the sky change, no
+  // decode/upload, no jank); a miss loads once via a bare loader (no loader
+  // overlay), caches, then applies. A map is only reassigned when its URL
+  // actually changed, so identical layers (e.g. bump/clouds shared across
+  // themes) cost nothing and don't trigger a material recompile.
+  _reloadTextures() {
+    const T = this.options.textures;
+    const mat = this.earth.material;
+    const cloudMat = this.clouds.material;
+    this._swapTexture(T.day, true, (tex) => {
+      if (mat.map !== tex) { mat.map = tex; mat.needsUpdate = true; }
+    });
+    this._swapTexture(T.spec, false, (tex) => {
+      if (mat.specularMap !== tex) {
+        mat.specularMap = tex;
+        mat.emissiveMap = tex;
+        mat.needsUpdate = true;
+      }
+    });
+    this._swapTexture(T.bump, false, (tex) => {
+      if (mat.bumpMap !== tex) { mat.bumpMap = tex; mat.needsUpdate = true; }
+    });
+    this._swapTexture(T.clouds, false, (tex) => {
+      if (cloudMat.map !== tex) { cloudMat.map = tex; cloudMat.needsUpdate = true; }
+    });
+  }
+
+  // Resolve a texture URL to a THREE.Texture via the per-scene cache. On a cache
+  // hit `apply` runs synchronously; on a miss the texture is loaded once (bare
+  // loader, so the initial-load overlay isn't re-triggered), configured, cached,
+  // then applied. Cached textures are owned by the scene and freed in dispose().
+  _swapTexture(url, srgb, apply) {
+    const cached = this._texCache.get(url);
+    if (cached) { apply(cached); return; }
+    if (!this._texLoader) {
+      this._texLoader = new THREE.TextureLoader();
+      this._texLoader.crossOrigin = 'anonymous';
+    }
+    this._texLoader.load(url, (tex) => {
+      if (srgb) tex.colorSpace = THREE.SRGBColorSpace;
+      tex.anisotropy = this.renderer.capabilities.getMaxAnisotropy();
+      this._texCache.set(url, tex);
+      apply(tex);
+    });
+  }
+
+  _initGraticule() {
+    const g = resolveGraticule(this.options.graticule);
+    const material = new THREE.ShaderMaterial({
+      uniforms: {
+        uSpacing: { value: g.spacing },
+        uColor:   { value: new THREE.Color(g.color) },
+        uOpacity: { value: g.opacity },
+      },
+      vertexShader: `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }`,
+      fragmentShader: `
+        precision highp float;
+        varying vec2 vUv;
+        uniform float uSpacing;
+        uniform vec3  uColor;
+        uniform float uOpacity;
+        // Anti-aliased line near each multiple of 'spacing', width held constant
+        // in screen space via derivatives so it stays crisp at any zoom.
+        float gridLine(float coord, float spacing) {
+          float c = coord / spacing;
+          float d = abs(fract(c - 0.5) - 0.5) / max(fwidth(c), 1e-5);
+          return 1.0 - clamp(d - 0.6, 0.0, 1.0);
+        }
+        void main() {
+          float lon = vUv.x * 360.0;
+          float lat = vUv.y * 180.0;
+          float gl = max(gridLine(lon, uSpacing), gridLine(lat, uSpacing));
+          if (gl < 0.01) discard;
+          gl_FragColor = vec4(uColor, gl * uOpacity);
+        }`,
+      transparent: true,
+      depthWrite: false,
+      side: THREE.FrontSide,
+      extensions: { derivatives: true },
+    });
+    // Radius just above the earth (1.0) and below the clouds (1.012). Child of
+    // the earth so it co-rotates with the surface and aligns with the markers.
+    this.graticule = new THREE.Mesh(new THREE.SphereGeometry(1.001, 96, 96), material);
+    this.graticule.visible = g.show;
+    this.earth.add(this.graticule);
+  }
+
+  _applyGraticule() {
+    if (!this.graticule) return;
+    const g = resolveGraticule(this.options.graticule);
+    this.graticule.visible = g.show;
+    const u = this.graticule.material.uniforms;
+    u.uSpacing.value = g.spacing;
+    u.uColor.value.set(g.color);
+    u.uOpacity.value = g.opacity;
   }
 
   _initMarkers() {
@@ -447,6 +560,13 @@ export class GlobeScene {
     if ('pois'   in partial) this.setPois(partial.pois);
     else if (themeChanged) this.setPois(this.options.pois); // rebuild markers in new palette
     if ('labels' in partial) this.setLabels(partial.labels);
+    if ('graticule' in partial) this._applyGraticule();
+    if ('textures' in partial) {
+      // Re-resolve against the defaults so passing `textures: undefined` (e.g.
+      // reverting to the built-in Blue Marble) restores every map, not wipes it.
+      this.options.textures = { ...DEFAULT_TEXTURES, ...(partial.textures || {}) };
+      this._reloadTextures();
+    }
     this._applyVisibility();
   }
 
@@ -590,6 +710,12 @@ export class GlobeScene {
       }
     });
     this.markerTex.dispose();
+    // Free every cached texture (including theme variants no longer attached to
+    // a material, which the scene.traverse above would not reach).
+    if (this._texCache) {
+      for (const tex of this._texCache.values()) tex.dispose();
+      this._texCache.clear();
+    }
     this.renderer.dispose();
   }
 

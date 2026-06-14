@@ -63,6 +63,7 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
     theme          = 'dark',
     themeColors,
     textures,
+    graticule,
     className      = '',
     style,
     onReady,
@@ -79,6 +80,7 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
   const canvasRef = useRef(null);
   const labelsRef = useRef(null);
   const sceneRef  = useRef(null);
+  const texturesInitedRef = useRef(false);
   const [toggles, setToggles] = useState({
     autoRotate, showClouds, showAtmosphere, showAurora, showLabels, showMarkers,
   });
@@ -98,6 +100,7 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
       onPoiClick,
     };
     if (textures) sceneOpts.textures = textures;
+    if (graticule) sceneOpts.graticule = graticule;
     const scene = new GlobeScene(canvasRef.current, labelsRef.current, sceneOpts);
     sceneRef.current = scene;
     return () => { scene.dispose(); sceneRef.current = null; };
@@ -114,6 +117,16 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
   // when the actual colors change.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { sceneRef.current?.setOptions({ themeColors }); }, [JSON.stringify(themeColors ?? null)]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { sceneRef.current?.setOptions({ graticule }); }, [JSON.stringify(graticule ?? null)]);
+  // Textures are applied once at construction; skip the mount-time run so we
+  // don't redundantly re-fetch them, then reload live on any later change (e.g.
+  // a theme toggle swapping in a vintage map / back to the default).
+  useEffect(() => {
+    if (!texturesInitedRef.current) { texturesInitedRef.current = true; return; }
+    sceneRef.current?.setOptions({ textures });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(textures ?? null)]);
   useEffect(() => { sceneRef.current?.setOptions({ enableZoom }); }, [enableZoom]);
   useEffect(() => { sceneRef.current?.setOptions({ enableRotate }); }, [enableRotate]);
   useEffect(() => { sceneRef.current?.setOptions({ autoRotate: toggles.autoRotate }); }, [toggles.autoRotate]);

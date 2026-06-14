@@ -609,3 +609,47 @@ describe('themeColors prop', () => {
   });
 });
 
+// ==================================================================
+// graticule prop
+// ==================================================================
+describe('graticule prop', () => {
+  it('forwards the graticule config into the scene at construction', async () => {
+    await renderAndLoad(<InteractiveGlobe graticule={{ show: true, spacing: 10 }} />);
+    expect(sceneInstances[0].options.graticule).toEqual({ show: true, spacing: 10 });
+  });
+
+  it('forwards graticule changes via setOptions', async () => {
+    const { rerender } = await renderAndLoad(
+      <InteractiveGlobe graticule={{ show: true, spacing: 15 }} />,
+    );
+    rerender(<InteractiveGlobe graticule={{ show: true, spacing: 30 }} />);
+    const last = sceneInstances[0].calls.setOptions.at(-1);
+    expect(last).toEqual({ graticule: { show: true, spacing: 30 } });
+  });
+
+  it('does not pass graticule when the prop is omitted', async () => {
+    await renderAndLoad(<InteractiveGlobe />);
+    expect(sceneInstances[0].options.graticule).toBeUndefined();
+  });
+});
+
+// ==================================================================
+// textures prop (live update)
+// ==================================================================
+describe('textures prop', () => {
+  it('does not reload textures on mount (applied at construction)', async () => {
+    await renderAndLoad(<InteractiveGlobe textures={{ day: '/a.jpg' }} />);
+    const texCalls = sceneInstances[0].calls.setOptions.filter((c) => 'textures' in c);
+    expect(texCalls).toHaveLength(0);
+  });
+
+  it('forwards textures changes via setOptions after mount', async () => {
+    const { rerender } = await renderAndLoad(
+      <InteractiveGlobe textures={{ day: '/a.jpg' }} />,
+    );
+    rerender(<InteractiveGlobe textures={{ day: '/b.jpg' }} />);
+    const last = sceneInstances[0].calls.setOptions.at(-1);
+    expect(last).toEqual({ textures: { day: '/b.jpg' } });
+  });
+});
+
