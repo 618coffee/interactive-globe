@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-06-13
+
+### Added
+- **`theme` prop** (`'light' | 'dark'`, default `'dark'`) on `<InteractiveGlobe>`
+  and `GlobeSceneOptions`. `theme="light"` renders a near-white sky (`#f9fafb`),
+  hides the starfield, atmosphere glow, and aurora (all additive-blended and so
+  invisible on a light background), draws solid coffee-accent (`#a67c52`)
+  markers, and switches labels/loader/chrome to dark-on-light via
+  `data-theme="light"` on `.ig-root`. Forwards live through `setOptions`. Dark
+  is unchanged and remains the default. New pure `resolveTheme()` resolver.
+
+### Notes
+- New `theme.js` resolver with 3 unit tests; 3 new wrapper tests (default dark,
+  light forwarding, live switch).
+
 ## [0.8.0] - 2026-06-13
 
 ### Added

@@ -32,6 +32,7 @@ import './styles.css';
  *   showLabels        boolean                                       default: true
  *   showMarkers       boolean                                       default: true
  *   exposure          number (renderer tone-mapping exposure)       default: 1.4
+ *   theme             'light' | 'dark' (light sky preset)           default: 'dark'
  *   textures          { day, spec, bump, clouds } URL overrides     default: 8K Blue Marble
  *   className, style  forwarded to the wrapper div
  *   onReady(api), onLoad(), onPoiClick(poi)
@@ -58,6 +59,7 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
     showLabels     = true,
     showMarkers    = true,
     exposure       = 1.4,
+    theme          = 'dark',
     textures,
     className      = '',
     style,
@@ -87,6 +89,7 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
       autoRotate, enableZoom, enableRotate,
       showClouds, showAtmosphere, showAurora, showLabels, showMarkers,
       exposure,
+      theme,
       onReady: (api) => { if (onReady) onReady(api); },
       onLoad:  () => { setLoaded(true); if (onLoad) onLoad(); },
       onPoiClick,
@@ -102,6 +105,7 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
   useEffect(() => { sceneRef.current?.setOptions({ pois }); }, [pois]);
   useEffect(() => { sceneRef.current?.setOptions({ labels }); }, [labels]);
   useEffect(() => { sceneRef.current?.setOptions({ exposure }); }, [exposure]);
+  useEffect(() => { sceneRef.current?.setOptions({ theme }); }, [theme]);
   useEffect(() => { sceneRef.current?.setOptions({ enableZoom }); }, [enableZoom]);
   useEffect(() => { sceneRef.current?.setOptions({ enableRotate }); }, [enableRotate]);
   useEffect(() => { sceneRef.current?.setOptions({ autoRotate: toggles.autoRotate }); }, [toggles.autoRotate]);
@@ -134,6 +138,7 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
       className={`ig-root ${className}`}
       style={style}
       data-ui={ui}
+      data-theme={theme}
     >
       <canvas ref={canvasRef} className="ig-canvas" />
       <div ref={labelsRef} className="ig-labels-layer" />

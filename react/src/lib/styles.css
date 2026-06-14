@@ -208,3 +208,55 @@
   animation: ig-spin 1s linear infinite;
 }
 @keyframes ig-spin { to { transform: rotate(360deg); } }
+
+/* ===================================================================
+   Light theme — DOM-node colors only (the WebGL sky/markers are themed
+   in globe-scene.js). Activated by data-theme="light" on .ig-root.
+   =================================================================== */
+.ig-root[data-theme="light"] {
+  background: #f9fafb;
+  color: #1b2430;
+}
+
+/* Labels: dark ink with a light halo so they read on a pale sky. */
+.ig-root[data-theme="light"] .ig-label {
+  color: rgba(27, 36, 48, 0.92);
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.9), 0 1px 1px rgba(255, 255, 255, 0.85);
+}
+.ig-root[data-theme="light"] .ig-continent { color: rgba(20, 28, 38, 0.9); }
+.ig-root[data-theme="light"] .ig-ocean     { color: rgba(54, 96, 140, 0.85); }
+.ig-root[data-theme="light"] .ig-country   { color: rgba(70, 52, 24, 0.92); }
+.ig-root[data-theme="light"] .ig-city      { color: rgba(28, 70, 96, 0.92); }
+.ig-root[data-theme="light"] .ig-mountain  { color: rgba(96, 64, 30, 0.92); }
+.ig-root[data-theme="light"] .ig-mountain::before { color: rgba(150, 96, 40, 0.85); }
+
+/* Loader: light gradient + dark text (no dark flash before first frame). */
+.ig-root[data-theme="light"] .ig-loader {
+  background: radial-gradient(ellipse at center, #ffffff 0%, #eef1f5 70%);
+  color: rgba(40, 52, 68, 0.85);
+}
+.ig-root[data-theme="light"] .ig-loader-ring {
+  border-color: rgba(166, 124, 82, 0.25);
+  border-top-color: rgba(166, 124, 82, 0.95);
+}
+
+/* Glass panels, buttons, dot — light surface variants (for ui="full"). */
+.ig-root[data-theme="light"] .ig-glass {
+  background: rgba(255, 255, 255, 0.66);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+.ig-root[data-theme="light"] .ig-btn { color: rgba(40, 52, 68, 0.86); }
+.ig-root[data-theme="light"] .ig-btn:hover { background: rgba(0, 0, 0, 0.05); color: #111827; }
+.ig-root[data-theme="light"] .ig-active {
+  background: rgba(166, 124, 82, 0.16);
+  color: #6b4a25;
+  box-shadow: inset 0 0 0 1px rgba(166, 124, 82, 0.35), 0 0 18px -8px rgba(166, 124, 82, 0.6);
+}
+.ig-root[data-theme="light"] .ig-eyebrow { color: rgba(120, 86, 50, 0.75); }
+.ig-root[data-theme="light"] .ig-dot {
+  background: rgb(166, 124, 82);
+  box-shadow: 0 0 12px rgba(166, 124, 82, 0.7);
+}
+.ig-root[data-theme="light"] .ig-divider { background: rgba(0, 0, 0, 0.1); }
+.ig-root[data-theme="light"] .ig-hint { border-top-color: rgba(0, 0, 0, 0.12); }

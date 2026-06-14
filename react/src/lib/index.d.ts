@@ -174,6 +174,8 @@ export interface GlobeSceneOptions {
   showMarkers?: boolean;
   /** Renderer tone-mapping exposure (brightness multiplier). Default 1.4. */
   exposure?: number;
+  /** Color theme. `'light'` uses a near-white sky, hides stars/atmosphere/aurora, and draws solid markers. Default `'dark'`. */
+  theme?: 'light' | 'dark';
   textures?: Partial<GlobeTextures>;
   onReady?: (scene: GlobeScene) => void;
   onLoad?: () => void;
@@ -256,6 +258,8 @@ export interface InteractiveGlobeProps {
   showMarkers?: boolean;
   /** Renderer tone-mapping exposure (brightness multiplier). Default 1.4. */
   exposure?: number;
+  /** Color theme. `'light'` uses a near-white sky, hides stars/atmosphere/aurora, and draws solid markers. Default `'dark'`. */
+  theme?: 'light' | 'dark';
   textures?: Partial<GlobeTextures>;
   className?: string;
   style?: CSSProperties;

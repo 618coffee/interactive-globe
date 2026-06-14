@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { resolveTheme } from './theme.js';
 
 // Real NASA Blue Marble Next Gen day map (8192×4096) + NASA cloud composite
 // (2048×1024), committed in this repo and served with CORS via jsDelivr-gh so the
@@ -39,25 +40,37 @@ function resolveEasing(easing) {
   return EASINGS[easing] || EASINGS.easeOutCubic;
 }
 
-function makeMarkerTexture() {
+// Parse '#rrggbb' to an {r,g,b} byte triple.
+function hexToRgb(hex) {
+  const n = parseInt(hex.slice(1), 16);
+  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+}
+const rgba = ({ r, g, b }, a) => `rgba(${r}, ${g}, ${b}, ${a})`;
+
+// Radial marker sprite. `palette` = { color, highlight, core }; defaults keep
+// the original cyan look so dark mode is unchanged.
+function makeMarkerTexture(palette = { color: '#8cebff', highlight: '#befaff', core: '#dcfaff' }) {
+  const base = hexToRgb(palette.color);
+  const hi   = hexToRgb(palette.highlight);
+  const core = hexToRgb(palette.core);
   const size = 128;
   const c = document.createElement('canvas');
   c.width = c.height = size;
   const ctx = c.getContext('2d');
   const cx = size / 2, cy = size / 2;
-  ctx.strokeStyle = 'rgba(140, 235, 255, 0.95)';
+  ctx.strokeStyle = rgba(base, 0.95);
   ctx.lineWidth = 3;
   ctx.beginPath(); ctx.arc(cx, cy, 38, 0, Math.PI * 2); ctx.stroke();
-  ctx.strokeStyle = 'rgba(140, 235, 255, 0.55)';
+  ctx.strokeStyle = rgba(base, 0.55);
   ctx.lineWidth = 2;
   ctx.beginPath(); ctx.arc(cx, cy, 22, 0, Math.PI * 2); ctx.stroke();
   const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, 18);
-  g.addColorStop(0,   'rgba(190, 250, 255, 0.95)');
-  g.addColorStop(0.5, 'rgba(140, 235, 255, 0.40)');
-  g.addColorStop(1,   'rgba(140, 235, 255, 0.00)');
+  g.addColorStop(0,   rgba(hi,   0.95));
+  g.addColorStop(0.5, rgba(base, 0.40));
+  g.addColorStop(1,   rgba(base, 0.00));
   ctx.fillStyle = g;
   ctx.beginPath(); ctx.arc(cx, cy, 18, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = 'rgba(220, 250, 255, 1)';
+  ctx.fillStyle = rgba(core, 1);
   ctx.beginPath(); ctx.arc(cx, cy, 5, 0, Math.PI * 2); ctx.fill();
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
@@ -126,6 +139,7 @@ export class GlobeScene {
       showLabels: true,
       showMarkers: true,
       exposure: 1.4,
+      theme: 'dark',
       onReady: null,
       onLoad: null,
       onPoiClick: null,
@@ -139,6 +153,8 @@ export class GlobeScene {
     this._rafId    = null;
     this._tmpVec   = new THREE.Vector3();
     this._tmpNor   = new THREE.Vector3();
+
+    this._theme = resolveTheme(this.options.theme);
 
     this._initRenderer();
     this._initScene();
@@ -166,7 +182,7 @@ export class GlobeScene {
 
   _initScene() {
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x000208);
+    this.scene.background = new THREE.Color(this._theme.background);
 
     const w = this.canvas.clientWidth || 1;
     const h = this.canvas.clientHeight || 1;
@@ -188,6 +204,7 @@ export class GlobeScene {
 
     this.stars = makeStars();
     this.scene.add(this.stars);
+    this.stars.visible = this._theme.showStars;
 
     this.scene.add(new THREE.AmbientLight(0xdfe9f5, 2.6));
   }
@@ -370,7 +387,7 @@ export class GlobeScene {
   }
 
   _initMarkers() {
-    this.markerTex = makeMarkerTexture();
+    this.markerTex = makeMarkerTexture(this._theme.marker);
     this.markers = new THREE.Group();
     this.markerMeshes = [];
     this.setPois(this.options.pois);
@@ -425,9 +442,21 @@ export class GlobeScene {
     if ('autoRotate'   in partial) this.controls.autoRotate = partial.autoRotate;
     if ('enableZoom'   in partial) this.controls.enableZoom = partial.enableZoom;
     if ('enableRotate' in partial) this.controls.enableRotate = partial.enableRotate;
+    if ('theme' in partial) this._applyTheme(partial.theme);
     if ('pois'   in partial) this.setPois(partial.pois);
+    else if ('theme' in partial) this.setPois(this.options.pois); // rebuild markers in new palette
     if ('labels' in partial) this.setLabels(partial.labels);
     this._applyVisibility();
+  }
+
+  // Re-resolve the theme and apply the parts that live outside _applyVisibility:
+  // sky color and the marker sprite palette. Marker meshes are rebuilt by the
+  // setPois call in setOptions (so their blending updates too).
+  _applyTheme(theme) {
+    this._theme = resolveTheme(theme);
+    if (this.scene) this.scene.background = new THREE.Color(this._theme.background);
+    if (this.markerTex) this.markerTex.dispose();
+    this.markerTex = makeMarkerTexture(this._theme.marker);
   }
 
   setPois(pois) {
@@ -445,7 +474,10 @@ export class GlobeScene {
       const mat = new THREE.MeshBasicMaterial({
         map: this.markerTex,
         transparent: true, depthWrite: false,
-        blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+        blending: this._theme.marker.blending === 'normal'
+          ? THREE.NormalBlending
+          : THREE.AdditiveBlending,
+        side: THREE.DoubleSide,
       });
       const m = new THREE.Mesh(new THREE.PlaneGeometry(0.06, 0.06), mat);
       m.position.copy(pos);
@@ -563,9 +595,12 @@ export class GlobeScene {
   _applyVisibility() {
     this.clouds.visible      = this.options.showClouds;
     this.markers.visible     = this.options.showMarkers;
-    this.atmosphere.visible  = this.options.showAtmosphere;
-    this.auroraNorth.visible = this.options.showAurora;
-    this.auroraSouth.visible = this.options.showAurora;
+    // The theme can force additive-blended layers off (they wash out on a
+    // light sky); a consumer's explicit show* still applies within the theme.
+    this.atmosphere.visible  = this.options.showAtmosphere && this._theme.showAtmosphere;
+    this.auroraNorth.visible = this.options.showAurora && this._theme.showAurora;
+    this.auroraSouth.visible = this.options.showAurora && this._theme.showAurora;
+    this.stars.visible       = this._theme.showStars;
     // labels handled per-frame via showLabels
   }
 
