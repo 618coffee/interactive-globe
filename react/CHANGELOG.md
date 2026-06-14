@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-06-14
+
+### Added
+- **`themeColors` prop** (and `GlobeSceneOptions.themeColors`) for caller-provided
+  color overrides merged on top of the active `theme` preset:
+  `{ background?: number | string, marker?: { color?, highlight?, core? } }`.
+  Lets consumers pick exact sky / marker colors (e.g. a warm `#f4efe7` paper
+  sky) without the package shipping a catalog of style presets — the package
+  keeps one preset per theme and the caller passes the palette. Semantic choices
+  (which layers are visible, marker blending) stay tied to `theme`. Forwards live
+  through `setOptions`; the wrapper diffs overrides by value so an inline object
+  literal doesn't rebuild the marker texture every render. New exported
+  `ThemeColors` type. `resolveTheme(theme, overrides)` gains the merge argument.
+
+### Notes
+- 4 new resolver tests (override merge, back-compat, no-mutation) and 3 new
+  wrapper tests (initial forward, live change, value-equal no-op).
+
 ## [0.9.0] - 2026-06-13
 
 ### Added

@@ -158,6 +158,23 @@ export interface InfoCardConfig {
 // Scene class (framework-agnostic)
 // ----------------------------------------------------------------------------
 
+/**
+ * Caller-provided color overrides merged on top of the active theme preset.
+ * Lets you pick the exact sky / marker colors without the package shipping a
+ * catalog of style presets. Semantic choices (which layers are visible, marker
+ * blending) stay tied to `theme` and are not overridable here.
+ */
+export interface ThemeColors {
+  /** Sky / scene background. CSS color string (e.g. `'#f4efe7'`) or `0xRRGGBB` int. */
+  background?: number | string;
+  /** Marker sprite colors, merged onto the theme's marker palette. */
+  marker?: {
+    color?: string;
+    highlight?: string;
+    core?: string;
+  };
+}
+
 export interface GlobeSceneOptions {
   pois?: POI[];
   labels?: LabelItem[];
@@ -176,6 +193,8 @@ export interface GlobeSceneOptions {
   exposure?: number;
   /** Color theme. `'light'` uses a near-white sky, hides stars/atmosphere/aurora, and draws solid markers. Default `'dark'`. */
   theme?: 'light' | 'dark';
+  /** Caller-provided color overrides merged onto the `theme` preset (sky + marker colors). */
+  themeColors?: ThemeColors;
   textures?: Partial<GlobeTextures>;
   onReady?: (scene: GlobeScene) => void;
   onLoad?: () => void;
@@ -260,6 +279,8 @@ export interface InteractiveGlobeProps {
   exposure?: number;
   /** Color theme. `'light'` uses a near-white sky, hides stars/atmosphere/aurora, and draws solid markers. Default `'dark'`. */
   theme?: 'light' | 'dark';
+  /** Caller-provided color overrides merged onto the `theme` preset (sky + marker colors). */
+  themeColors?: ThemeColors;
   textures?: Partial<GlobeTextures>;
   className?: string;
   style?: CSSProperties;
