@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.11.1] - 2026-06-14
+
+### Improved
+- **Theme switching now transitions smoothly** instead of hard-cutting visual
+  layers. During light/dark changes, the sky background, stars, atmosphere, and
+  aurora now animate over ~560ms with eased interpolation, matching host-site
+  theme cadence more closely.
+- **Earth surface map swaps now cross-fade** on theme texture changes, so
+  switching between antique/light and Blue Marble/dark looks less abrupt.
+
 ## [0.11.0] - 2026-06-14
 
 ### Added

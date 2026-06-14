@@ -16,6 +16,9 @@ const DEFAULT_TEXTURES = {
   clouds: `${TEXTURE_BASE}/earth-clouds-2k.jpg`,
 };
 
+// Align with the host site's theme token transition cadence for perceived sync.
+const THEME_TRANSITION_MS = 560;
+
 function latLonToVec3(lat, lon, r = 1) {
   const phi   = (90 - lat) * Math.PI / 180;
   const theta = (lon + 180) * Math.PI / 180;
@@ -184,7 +187,8 @@ export class GlobeScene {
 
   _initScene() {
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(this._theme.background);
+    this._backgroundColor = new THREE.Color(this._theme.background);
+    this.scene.background = this._backgroundColor;
 
     const w = this.canvas.clientWidth || 1;
     const h = this.canvas.clientHeight || 1;
@@ -206,7 +210,8 @@ export class GlobeScene {
 
     this.stars = makeStars();
     this.scene.add(this.stars);
-    this.stars.visible = this._theme.showStars;
+    this.stars.material.opacity = this._theme.showStars ? 0.85 : 0;
+    this.stars.visible = this.stars.material.opacity > 0.001;
 
     this.scene.add(new THREE.AmbientLight(0xdfe9f5, 2.6));
   }
@@ -278,6 +283,8 @@ export class GlobeScene {
       })
     );
     this.scene.add(this.atmosphere);
+    this.atmosphere.material.opacity = this._theme.showAtmosphere ? 1 : 0;
+    this.atmosphere.visible = this.atmosphere.material.opacity > 0.001;
 
     // ---------- Aurora -----------------------------------------------
     // Real auroras hug the auroral oval — roughly 65°–78° magnetic
@@ -384,6 +391,10 @@ export class GlobeScene {
     // Children of the earth so they ride along if it ever rotates.
     this.earth.add(this.auroraNorth);
     this.earth.add(this.auroraSouth);
+    const auroraOn = this.options.showAurora && this._theme.showAurora;
+    this.auroraMat.uniforms.uIntensity.value = auroraOn ? 0.8 : 0;
+    this.auroraNorth.visible = auroraOn;
+    this.auroraSouth.visible = auroraOn;
 
     // Cache decoded textures by URL so a later theme toggle that swaps the
     // surface map can reuse an already-uploaded GPU texture (a synchronous
@@ -407,7 +418,11 @@ export class GlobeScene {
     const mat = this.earth.material;
     const cloudMat = this.clouds.material;
     this._swapTexture(T.day, true, (tex) => {
-      if (mat.map !== tex) { mat.map = tex; mat.needsUpdate = true; }
+      if (mat.map !== tex) {
+        this._startSurfaceCrossfade(mat.map);
+        mat.map = tex;
+        mat.needsUpdate = true;
+      }
     });
     this._swapTexture(T.spec, false, (tex) => {
       if (mat.specularMap !== tex) {
@@ -576,8 +591,12 @@ export class GlobeScene {
   // blending updates too). Reads from this.options so a themeColors-only change
   // re-resolves correctly.
   _applyTheme() {
+    const prevTheme = this._theme;
     this._theme = resolveTheme(this.options.theme, this.options.themeColors);
-    if (this.scene) this.scene.background = new THREE.Color(this._theme.background);
+    if (this.scene) {
+      const themeNameChanged = prevTheme && prevTheme !== this._theme;
+      this._startThemeTransition(themeNameChanged);
+    }
     if (this.markerTex) this.markerTex.dispose();
     this.markerTex = makeMarkerTexture(this._theme.marker);
   }
@@ -724,13 +743,122 @@ export class GlobeScene {
   _applyVisibility() {
     this.clouds.visible      = this.options.showClouds;
     this.markers.visible     = this.options.showMarkers;
-    // The theme can force additive-blended layers off (they wash out on a
-    // light sky); a consumer's explicit show* still applies within the theme.
-    this.atmosphere.visible  = this.options.showAtmosphere && this._theme.showAtmosphere;
-    this.auroraNorth.visible = this.options.showAurora && this._theme.showAurora;
-    this.auroraSouth.visible = this.options.showAurora && this._theme.showAurora;
-    this.stars.visible       = this._theme.showStars;
+    this._syncThemeLayerTargets();
     // labels handled per-frame via showLabels
+  }
+
+  _syncThemeLayerTargets() {
+    const starsTarget = this._theme.showStars ? 0.85 : 0;
+    const atmoTarget = (this.options.showAtmosphere && this._theme.showAtmosphere) ? 1 : 0;
+    const auroraTarget = (this.options.showAurora && this._theme.showAurora) ? 0.8 : 0;
+    // Keep additive layers visible while fading out so the transition is smooth.
+    this.stars.visible = starsTarget > 0 || this.stars.material.opacity > 0.001;
+    this.atmosphere.visible = atmoTarget > 0 || this.atmosphere.material.opacity > 0.001;
+    this.auroraNorth.visible = auroraTarget > 0 || this.auroraMat.uniforms.uIntensity.value > 0.001;
+    this.auroraSouth.visible = auroraTarget > 0 || this.auroraMat.uniforms.uIntensity.value > 0.001;
+
+    if (this._themeTransition && this._themeTransition.active) {
+      this._themeTransition.to.starsOpacity = starsTarget;
+      this._themeTransition.to.atmosphereOpacity = atmoTarget;
+      this._themeTransition.to.auroraIntensity = auroraTarget;
+      return;
+    }
+    this.stars.material.opacity = starsTarget;
+    this.atmosphere.material.opacity = atmoTarget;
+    this.auroraMat.uniforms.uIntensity.value = auroraTarget;
+    this.stars.visible = this.stars.material.opacity > 0.001;
+    this.atmosphere.visible = this.atmosphere.material.opacity > 0.001;
+    this.auroraNorth.visible = this.auroraMat.uniforms.uIntensity.value > 0.001;
+    this.auroraSouth.visible = this.auroraMat.uniforms.uIntensity.value > 0.001;
+  }
+
+  _startThemeTransition(animate) {
+    const to = {
+      background: new THREE.Color(this._theme.background),
+      starsOpacity: this._theme.showStars ? 0.85 : 0,
+      atmosphereOpacity: (this.options.showAtmosphere && this._theme.showAtmosphere) ? 1 : 0,
+      auroraIntensity: (this.options.showAurora && this._theme.showAurora) ? 0.8 : 0,
+    };
+
+    if (!animate) {
+      this._backgroundColor.copy(to.background);
+      this.stars.material.opacity = to.starsOpacity;
+      this.atmosphere.material.opacity = to.atmosphereOpacity;
+      this.auroraMat.uniforms.uIntensity.value = to.auroraIntensity;
+      this.stars.visible = this.stars.material.opacity > 0.001;
+      this.atmosphere.visible = this.atmosphere.material.opacity > 0.001;
+      this.auroraNorth.visible = this.auroraMat.uniforms.uIntensity.value > 0.001;
+      this.auroraSouth.visible = this.auroraMat.uniforms.uIntensity.value > 0.001;
+      return;
+    }
+
+    this._themeTransition = {
+      active: true,
+      startMs: performance.now(),
+      durationMs: THEME_TRANSITION_MS,
+      from: {
+        background: this._backgroundColor.clone(),
+        starsOpacity: this.stars.material.opacity,
+        atmosphereOpacity: this.atmosphere.material.opacity,
+        auroraIntensity: this.auroraMat.uniforms.uIntensity.value,
+      },
+      to,
+    };
+  }
+
+  _tickThemeTransition(nowMs) {
+    const tr = this._themeTransition;
+    if (!tr || !tr.active) return;
+    const u = Math.min(1, (nowMs - tr.startMs) / tr.durationMs);
+    const eased = 1 - Math.pow(1 - u, 3);
+
+    this._backgroundColor.copy(tr.from.background).lerp(tr.to.background, eased);
+    this.stars.material.opacity = THREE.MathUtils.lerp(tr.from.starsOpacity, tr.to.starsOpacity, eased);
+    this.atmosphere.material.opacity = THREE.MathUtils.lerp(tr.from.atmosphereOpacity, tr.to.atmosphereOpacity, eased);
+    this.auroraMat.uniforms.uIntensity.value = THREE.MathUtils.lerp(tr.from.auroraIntensity, tr.to.auroraIntensity, eased);
+
+    this.stars.visible = this.stars.material.opacity > 0.001;
+    this.atmosphere.visible = this.atmosphere.material.opacity > 0.001;
+    this.auroraNorth.visible = this.auroraMat.uniforms.uIntensity.value > 0.001;
+    this.auroraSouth.visible = this.auroraMat.uniforms.uIntensity.value > 0.001;
+
+    if (u >= 1) tr.active = false;
+  }
+
+  _startSurfaceCrossfade(previousTexture) {
+    if (!previousTexture) return;
+    if (!this._surfaceFadeMesh) {
+      this._surfaceFadeMesh = new THREE.Mesh(
+        new THREE.SphereGeometry(1.0008, 128, 128),
+        new THREE.MeshPhongMaterial({
+          transparent: true,
+          depthWrite: false,
+          side: THREE.FrontSide,
+        }),
+      );
+      this.earth.add(this._surfaceFadeMesh);
+    }
+    const mat = this._surfaceFadeMesh.material;
+    mat.map = previousTexture;
+    mat.opacity = 1;
+    mat.needsUpdate = true;
+    this._surfaceFadeMesh.visible = true;
+    this._surfaceFade = {
+      startMs: performance.now(),
+      durationMs: THEME_TRANSITION_MS,
+    };
+  }
+
+  _tickSurfaceCrossfade(nowMs) {
+    if (!this._surfaceFade || !this._surfaceFadeMesh) return;
+    const u = Math.min(1, (nowMs - this._surfaceFade.startMs) / this._surfaceFade.durationMs);
+    const eased = 1 - Math.pow(1 - u, 3);
+    this._surfaceFadeMesh.material.opacity = 1 - eased;
+    if (u >= 1) {
+      this._surfaceFadeMesh.visible = false;
+      this._surfaceFadeMesh.material.map = null;
+      this._surfaceFade = null;
+    }
   }
 
   _tween(sPos, ePos, sTar, eTar, dur, easing) {
@@ -763,6 +891,10 @@ export class GlobeScene {
     if (!this._clock) this._clock = new THREE.Clock();
     const dt = Math.min(this._clock.getDelta(), 0.05);
     const t  = this._clock.elapsedTime;
+    const nowMs = performance.now();
+
+    this._tickThemeTransition(nowMs);
+    this._tickSurfaceCrossfade(nowMs);
 
     if (this.options.showClouds) this.clouds.rotation.y += dt * 0.012;
 
