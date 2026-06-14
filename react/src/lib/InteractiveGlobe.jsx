@@ -63,6 +63,7 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
     theme          = 'dark',
     themeColors,
     textures,
+    graticule,
     className      = '',
     style,
     onReady,
@@ -98,6 +99,7 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
       onPoiClick,
     };
     if (textures) sceneOpts.textures = textures;
+    if (graticule) sceneOpts.graticule = graticule;
     const scene = new GlobeScene(canvasRef.current, labelsRef.current, sceneOpts);
     sceneRef.current = scene;
     return () => { scene.dispose(); sceneRef.current = null; };
@@ -114,6 +116,8 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
   // when the actual colors change.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { sceneRef.current?.setOptions({ themeColors }); }, [JSON.stringify(themeColors ?? null)]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { sceneRef.current?.setOptions({ graticule }); }, [JSON.stringify(graticule ?? null)]);
   useEffect(() => { sceneRef.current?.setOptions({ enableZoom }); }, [enableZoom]);
   useEffect(() => { sceneRef.current?.setOptions({ enableRotate }); }, [enableRotate]);
   useEffect(() => { sceneRef.current?.setOptions({ autoRotate: toggles.autoRotate }); }, [toggles.autoRotate]);

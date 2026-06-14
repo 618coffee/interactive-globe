@@ -609,3 +609,27 @@ describe('themeColors prop', () => {
   });
 });
 
+// ==================================================================
+// graticule prop
+// ==================================================================
+describe('graticule prop', () => {
+  it('forwards the graticule config into the scene at construction', async () => {
+    await renderAndLoad(<InteractiveGlobe graticule={{ show: true, spacing: 10 }} />);
+    expect(sceneInstances[0].options.graticule).toEqual({ show: true, spacing: 10 });
+  });
+
+  it('forwards graticule changes via setOptions', async () => {
+    const { rerender } = await renderAndLoad(
+      <InteractiveGlobe graticule={{ show: true, spacing: 15 }} />,
+    );
+    rerender(<InteractiveGlobe graticule={{ show: true, spacing: 30 }} />);
+    const last = sceneInstances[0].calls.setOptions.at(-1);
+    expect(last).toEqual({ graticule: { show: true, spacing: 30 } });
+  });
+
+  it('does not pass graticule when the prop is omitted', async () => {
+    await renderAndLoad(<InteractiveGlobe />);
+    expect(sceneInstances[0].options.graticule).toBeUndefined();
+  });
+});
+
