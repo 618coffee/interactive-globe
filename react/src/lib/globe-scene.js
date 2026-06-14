@@ -408,7 +408,7 @@ export class GlobeScene {
         uniform float uSpacing;
         uniform vec3  uColor;
         uniform float uOpacity;
-        // Anti-aliased line near each multiple of `spacing`, width held constant
+        // Anti-aliased line near each multiple of 'spacing', width held constant
         // in screen space via derivatives so it stays crisp at any zoom.
         float gridLine(float coord, float spacing) {
           float c = coord / spacing;
