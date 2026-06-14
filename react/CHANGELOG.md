@@ -16,6 +16,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   compatible — consumers that don't pass `graticule` are unchanged. New exported
   `GraticuleConfig` type; new key on `GlobeSceneOptions` and `InteractiveGlobeProps`.
 
+### Fixed
+- **`textures` now updates live.** Previously the surface textures were only
+  applied at scene construction, so changing the `textures` prop after mount
+  (e.g. swapping a vintage day map in/out on a theme toggle) had no effect. The
+  scene now reloads textures on `setOptions({ textures })`, swapping each map
+  only once its replacement has loaded (no blank frame) and disposing the old
+  GPU texture. Clearing the prop reverts to the built-in Blue Marble set.
+
 ## [0.10.0] - 2026-06-14
 
 ### Added

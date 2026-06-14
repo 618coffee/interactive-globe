@@ -633,3 +633,23 @@ describe('graticule prop', () => {
   });
 });
 
+// ==================================================================
+// textures prop (live update)
+// ==================================================================
+describe('textures prop', () => {
+  it('does not reload textures on mount (applied at construction)', async () => {
+    await renderAndLoad(<InteractiveGlobe textures={{ day: '/a.jpg' }} />);
+    const texCalls = sceneInstances[0].calls.setOptions.filter((c) => 'textures' in c);
+    expect(texCalls).toHaveLength(0);
+  });
+
+  it('forwards textures changes via setOptions after mount', async () => {
+    const { rerender } = await renderAndLoad(
+      <InteractiveGlobe textures={{ day: '/a.jpg' }} />,
+    );
+    rerender(<InteractiveGlobe textures={{ day: '/b.jpg' }} />);
+    const last = sceneInstances[0].calls.setOptions.at(-1);
+    expect(last).toEqual({ textures: { day: '/b.jpg' } });
+  });
+});
+

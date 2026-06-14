@@ -388,6 +388,52 @@ export class GlobeScene {
     this._textures = { dayTex, specTex, bumpTex, cloudTex };
   }
 
+  // Live-swap the surface textures (e.g. when the theme toggles between the
+  // default Blue Marble and a caller-provided vintage map). Each map is swapped
+  // only once its replacement has loaded, so there is no blank frame, and the
+  // previous GPU texture is disposed after the swap. Uses a bare loader (not the
+  // initial LoadingManager) so it does not re-trigger the onLoad/loader overlay.
+  _reloadTextures() {
+    const T = this.options.textures;
+    const loader = new THREE.TextureLoader();
+    loader.crossOrigin = 'anonymous';
+    const maxAniso = this.renderer.capabilities.getMaxAnisotropy();
+    const mat = this.earth.material;
+    const cloudMat = this.clouds.material;
+    const prev = this._textures;
+
+    loader.load(T.day, (tex) => {
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.anisotropy = maxAniso;
+      mat.map = tex;
+      mat.needsUpdate = true;
+      if (prev && prev.dayTex) prev.dayTex.dispose();
+      this._textures.dayTex = tex;
+    });
+    loader.load(T.spec, (tex) => {
+      tex.anisotropy = maxAniso;
+      mat.specularMap = tex;
+      mat.emissiveMap = tex;
+      mat.needsUpdate = true;
+      if (prev && prev.specTex) prev.specTex.dispose();
+      this._textures.specTex = tex;
+    });
+    loader.load(T.bump, (tex) => {
+      tex.anisotropy = maxAniso;
+      mat.bumpMap = tex;
+      mat.needsUpdate = true;
+      if (prev && prev.bumpTex) prev.bumpTex.dispose();
+      this._textures.bumpTex = tex;
+    });
+    loader.load(T.clouds, (tex) => {
+      tex.anisotropy = maxAniso;
+      cloudMat.map = tex;
+      cloudMat.needsUpdate = true;
+      if (prev && prev.cloudTex) prev.cloudTex.dispose();
+      this._textures.cloudTex = tex;
+    });
+  }
+
   _initGraticule() {
     const g = resolveGraticule(this.options.graticule);
     const material = new THREE.ShaderMaterial({
@@ -506,6 +552,12 @@ export class GlobeScene {
     else if (themeChanged) this.setPois(this.options.pois); // rebuild markers in new palette
     if ('labels' in partial) this.setLabels(partial.labels);
     if ('graticule' in partial) this._applyGraticule();
+    if ('textures' in partial) {
+      // Re-resolve against the defaults so passing `textures: undefined` (e.g.
+      // reverting to the built-in Blue Marble) restores every map, not wipes it.
+      this.options.textures = { ...DEFAULT_TEXTURES, ...(partial.textures || {}) };
+      this._reloadTextures();
+    }
     this._applyVisibility();
   }
 
