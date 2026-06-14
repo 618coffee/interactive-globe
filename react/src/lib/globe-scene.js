@@ -385,52 +385,61 @@ export class GlobeScene {
     this.earth.add(this.auroraNorth);
     this.earth.add(this.auroraSouth);
 
-    this._textures = { dayTex, specTex, bumpTex, cloudTex };
+    // Cache decoded textures by URL so a later theme toggle that swaps the
+    // surface map can reuse an already-uploaded GPU texture (a synchronous
+    // reference swap, in the same frame as the sky change — no re-decode, no
+    // re-upload, no jank) instead of re-loading a multi-megabyte image every
+    // time. Seeded with the initial set so toggling back to it is instant too.
+    this._texCache = new Map([
+      [T.day, dayTex], [T.spec, specTex], [T.bump, bumpTex], [T.clouds, cloudTex],
+    ]);
   }
 
   // Live-swap the surface textures (e.g. when the theme toggles between the
-  // default Blue Marble and a caller-provided vintage map). Each map is swapped
-  // only once its replacement has loaded, so there is no blank frame, and the
-  // previous GPU texture is disposed after the swap. Uses a bare loader (not the
-  // initial LoadingManager) so it does not re-trigger the onLoad/loader overlay.
+  // default Blue Marble and a caller-provided vintage map). Textures are cached
+  // by URL: a cache hit applies synchronously (same frame as the sky change, no
+  // decode/upload, no jank); a miss loads once via a bare loader (no loader
+  // overlay), caches, then applies. A map is only reassigned when its URL
+  // actually changed, so identical layers (e.g. bump/clouds shared across
+  // themes) cost nothing and don't trigger a material recompile.
   _reloadTextures() {
     const T = this.options.textures;
-    const loader = new THREE.TextureLoader();
-    loader.crossOrigin = 'anonymous';
-    const maxAniso = this.renderer.capabilities.getMaxAnisotropy();
     const mat = this.earth.material;
     const cloudMat = this.clouds.material;
-    const prev = this._textures;
+    this._swapTexture(T.day, true, (tex) => {
+      if (mat.map !== tex) { mat.map = tex; mat.needsUpdate = true; }
+    });
+    this._swapTexture(T.spec, false, (tex) => {
+      if (mat.specularMap !== tex) {
+        mat.specularMap = tex;
+        mat.emissiveMap = tex;
+        mat.needsUpdate = true;
+      }
+    });
+    this._swapTexture(T.bump, false, (tex) => {
+      if (mat.bumpMap !== tex) { mat.bumpMap = tex; mat.needsUpdate = true; }
+    });
+    this._swapTexture(T.clouds, false, (tex) => {
+      if (cloudMat.map !== tex) { cloudMat.map = tex; cloudMat.needsUpdate = true; }
+    });
+  }
 
-    loader.load(T.day, (tex) => {
-      tex.colorSpace = THREE.SRGBColorSpace;
-      tex.anisotropy = maxAniso;
-      mat.map = tex;
-      mat.needsUpdate = true;
-      if (prev && prev.dayTex) prev.dayTex.dispose();
-      this._textures.dayTex = tex;
-    });
-    loader.load(T.spec, (tex) => {
-      tex.anisotropy = maxAniso;
-      mat.specularMap = tex;
-      mat.emissiveMap = tex;
-      mat.needsUpdate = true;
-      if (prev && prev.specTex) prev.specTex.dispose();
-      this._textures.specTex = tex;
-    });
-    loader.load(T.bump, (tex) => {
-      tex.anisotropy = maxAniso;
-      mat.bumpMap = tex;
-      mat.needsUpdate = true;
-      if (prev && prev.bumpTex) prev.bumpTex.dispose();
-      this._textures.bumpTex = tex;
-    });
-    loader.load(T.clouds, (tex) => {
-      tex.anisotropy = maxAniso;
-      cloudMat.map = tex;
-      cloudMat.needsUpdate = true;
-      if (prev && prev.cloudTex) prev.cloudTex.dispose();
-      this._textures.cloudTex = tex;
+  // Resolve a texture URL to a THREE.Texture via the per-scene cache. On a cache
+  // hit `apply` runs synchronously; on a miss the texture is loaded once (bare
+  // loader, so the initial-load overlay isn't re-triggered), configured, cached,
+  // then applied. Cached textures are owned by the scene and freed in dispose().
+  _swapTexture(url, srgb, apply) {
+    const cached = this._texCache.get(url);
+    if (cached) { apply(cached); return; }
+    if (!this._texLoader) {
+      this._texLoader = new THREE.TextureLoader();
+      this._texLoader.crossOrigin = 'anonymous';
+    }
+    this._texLoader.load(url, (tex) => {
+      if (srgb) tex.colorSpace = THREE.SRGBColorSpace;
+      tex.anisotropy = this.renderer.capabilities.getMaxAnisotropy();
+      this._texCache.set(url, tex);
+      apply(tex);
     });
   }
 
@@ -701,6 +710,12 @@ export class GlobeScene {
       }
     });
     this.markerTex.dispose();
+    // Free every cached texture (including theme variants no longer attached to
+    // a material, which the scene.traverse above would not reach).
+    if (this._texCache) {
+      for (const tex of this._texCache.values()) tex.dispose();
+      this._texCache.clear();
+    }
     this.renderer.dispose();
   }
 

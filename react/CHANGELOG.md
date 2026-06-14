@@ -17,12 +17,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   `GraticuleConfig` type; new key on `GlobeSceneOptions` and `InteractiveGlobeProps`.
 
 ### Fixed
-- **`textures` now updates live.** Previously the surface textures were only
-  applied at scene construction, so changing the `textures` prop after mount
+- **`textures` now updates live, smoothly.** Previously the surface textures were
+  only applied at scene construction, so changing the `textures` prop after mount
   (e.g. swapping a vintage day map in/out on a theme toggle) had no effect. The
-  scene now reloads textures on `setOptions({ textures })`, swapping each map
-  only once its replacement has loaded (no blank frame) and disposing the old
-  GPU texture. Clearing the prop reverts to the built-in Blue Marble set.
+  scene now reloads textures on `setOptions({ textures })` and caches decoded
+  textures by URL: the first switch to a given map loads it once, and every
+  later switch back is a synchronous reference swap — same frame as the rest of
+  the theme change, with no re-decode, re-upload, or jank. A map is only
+  reassigned when its URL actually changes, so unchanged layers are free.
+  Clearing the prop reverts to the built-in Blue Marble set.
 
 ## [0.10.0] - 2026-06-14
 
