@@ -32,6 +32,7 @@ import './styles.css';
  *   showLabels        boolean                                       default: true
  *   showMarkers       boolean                                       default: true
  *   exposure          number (renderer tone-mapping exposure)       default: 1.4
+ *   theme             'light' | 'dark' (light sky preset)           default: 'dark'
  *   textures          { day, spec, bump, clouds } URL overrides     default: 8K Blue Marble
  *   className, style  forwarded to the wrapper div
  *   onReady(api), onLoad(), onPoiClick(poi)
