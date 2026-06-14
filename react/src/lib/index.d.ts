@@ -175,6 +175,22 @@ export interface ThemeColors {
   };
 }
 
+/**
+ * Lat/lon graticule overlay. A transparent grid drawn on the globe surface with
+ * screen-space-constant line width (crisp at any zoom). Off by default; omitted
+ * keys fall back to the defaults (spacing 15°, color '#6b5238', opacity 0.28).
+ */
+export interface GraticuleConfig {
+  /** Show the grid overlay. Default `false`. */
+  show?: boolean;
+  /** Degrees between grid lines. Default `15`. */
+  spacing?: number;
+  /** Line color, CSS hex. Default `'#6b5238'`. */
+  color?: string;
+  /** Line opacity, `0`..`1`. Default `0.28`. */
+  opacity?: number;
+}
+
 export interface GlobeSceneOptions {
   pois?: POI[];
   labels?: LabelItem[];
@@ -196,6 +212,7 @@ export interface GlobeSceneOptions {
   /** Caller-provided color overrides merged onto the `theme` preset (sky + marker colors). */
   themeColors?: ThemeColors;
   textures?: Partial<GlobeTextures>;
+  graticule?: GraticuleConfig;
   onReady?: (scene: GlobeScene) => void;
   onLoad?: () => void;
   onPoiClick?: (poi: POI) => void;
@@ -282,6 +299,8 @@ export interface InteractiveGlobeProps {
   /** Caller-provided color overrides merged onto the `theme` preset (sky + marker colors). */
   themeColors?: ThemeColors;
   textures?: Partial<GlobeTextures>;
+  /** Lat/lon graticule overlay (off by default). */
+  graticule?: GraticuleConfig;
   className?: string;
   style?: CSSProperties;
   onReady?: (scene: GlobeScene) => void;

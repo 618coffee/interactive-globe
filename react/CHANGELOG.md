@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-06-14
+
+### Added
+- **`graticule` prop** (`{ show?, spacing?, color?, opacity? }`, default off):
+  a parametric lat/lon grid overlay drawn on the globe surface with
+  screen-space-constant line width, so it stays crisp at any zoom. Backward
+  compatible — consumers that don't pass `graticule` are unchanged. New exported
+  `GraticuleConfig` type; new key on `GlobeSceneOptions` and `InteractiveGlobeProps`.
+
 ## [0.10.0] - 2026-06-14
 
 ### Added
