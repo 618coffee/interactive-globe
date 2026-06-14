@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { resolveTheme } from './theme.js';
+import { resolveGraticule } from './graticule.js';
 
 // Real NASA Blue Marble Next Gen day map (8192×4096) + NASA cloud composite
 // (2048×1024), committed in this repo and served with CORS via jsDelivr-gh so the
@@ -159,6 +160,7 @@ export class GlobeScene {
     this._initRenderer();
     this._initScene();
     this._initEarth();
+    this._initGraticule();
     this._initMarkers();
     this._initLabels();
     this._initInteraction();
@@ -386,6 +388,62 @@ export class GlobeScene {
     this._textures = { dayTex, specTex, bumpTex, cloudTex };
   }
 
+  _initGraticule() {
+    const g = resolveGraticule(this.options.graticule);
+    const material = new THREE.ShaderMaterial({
+      uniforms: {
+        uSpacing: { value: g.spacing },
+        uColor:   { value: new THREE.Color(g.color) },
+        uOpacity: { value: g.opacity },
+      },
+      vertexShader: `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }`,
+      fragmentShader: `
+        precision highp float;
+        varying vec2 vUv;
+        uniform float uSpacing;
+        uniform vec3  uColor;
+        uniform float uOpacity;
+        // Anti-aliased line near each multiple of `spacing`, width held constant
+        // in screen space via derivatives so it stays crisp at any zoom.
+        float gridLine(float coord, float spacing) {
+          float c = coord / spacing;
+          float d = abs(fract(c - 0.5) - 0.5) / max(fwidth(c), 1e-5);
+          return 1.0 - clamp(d - 0.6, 0.0, 1.0);
+        }
+        void main() {
+          float lon = vUv.x * 360.0;
+          float lat = vUv.y * 180.0;
+          float gl = max(gridLine(lon, uSpacing), gridLine(lat, uSpacing));
+          if (gl < 0.01) discard;
+          gl_FragColor = vec4(uColor, gl * uOpacity);
+        }`,
+      transparent: true,
+      depthWrite: false,
+      side: THREE.FrontSide,
+      extensions: { derivatives: true },
+    });
+    // Radius just above the earth (1.0) and below the clouds (1.012). Child of
+    // the earth so it co-rotates with the surface and aligns with the markers.
+    this.graticule = new THREE.Mesh(new THREE.SphereGeometry(1.001, 96, 96), material);
+    this.graticule.visible = g.show;
+    this.earth.add(this.graticule);
+  }
+
+  _applyGraticule() {
+    if (!this.graticule) return;
+    const g = resolveGraticule(this.options.graticule);
+    this.graticule.visible = g.show;
+    const u = this.graticule.material.uniforms;
+    u.uSpacing.value = g.spacing;
+    u.uColor.value.set(g.color);
+    u.uOpacity.value = g.opacity;
+  }
+
   _initMarkers() {
     this.markerTex = makeMarkerTexture(this._theme.marker);
     this.markers = new THREE.Group();
@@ -447,6 +505,7 @@ export class GlobeScene {
     if ('pois'   in partial) this.setPois(partial.pois);
     else if (themeChanged) this.setPois(this.options.pois); // rebuild markers in new palette
     if ('labels' in partial) this.setLabels(partial.labels);
+    if ('graticule' in partial) this._applyGraticule();
     this._applyVisibility();
   }
 
