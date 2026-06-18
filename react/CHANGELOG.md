@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.13.2] - 2026-06-18
+
+### Changed
+- **The webgl globe's idle auto-rotation tilt now matches the flat globe.** The
+  default camera sat at a ~5.7° elevation while the flat globe idles at a 12°
+  tilt (`IDLE_TILT`), so the two renderers spun at visibly different axial tilts.
+  The webgl camera now starts at the same 12° centre latitude (`reset()` too).
+
 ## [0.13.1] - 2026-06-18
 
 ### Fixed

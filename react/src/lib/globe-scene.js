@@ -20,6 +20,13 @@ const DEFAULT_TEXTURES = {
 // Align with the host site's theme token transition cadence for perceived sync.
 const THEME_TRANSITION_MS = 560;
 
+// Idle camera tilt: the latitude shown at the disc centre while auto-rotating.
+// Matches the flat globe's IDLE_TILT (-12 deg in its d3 rotate convention, i.e. a
+// +12 deg centre latitude) so both renderers spin at the same axial tilt.
+// _applyFit rescales the distance, so only this direction (elevation) matters.
+const IDLE_TILT_DEG = 12;
+const IDLE_CAMERA_Y = 3 * Math.tan((IDLE_TILT_DEG * Math.PI) / 180);
+
 function latLonToVec3(lat, lon, r = 1) {
   const { x, y, z } = latLonToCoords(lat, lon, r);
   return new THREE.Vector3(x, y, z);
@@ -203,7 +210,7 @@ export class GlobeScene {
     const w = this.canvas.clientWidth || 1;
     const h = this.canvas.clientHeight || 1;
     this.camera = new THREE.PerspectiveCamera(45, w / h, 0.05, 2000);
-    this.camera.position.set(0, 0.3, 3);
+    this.camera.position.set(0, IDLE_CAMERA_Y, 3);
 
     this.controls = new OrbitControls(this.camera, this.canvas);
     this.controls.enableDamping   = true;
@@ -667,7 +674,7 @@ export class GlobeScene {
 
   reset() {
     this._tween(
-      this.camera.position.clone(), new THREE.Vector3(0, 0.3, 3),
+      this.camera.position.clone(), new THREE.Vector3(0, IDLE_CAMERA_Y, 3),
       this.controls.target.clone(),  new THREE.Vector3(0, 0, 0),
       700,
     );
