@@ -247,6 +247,8 @@ export interface GlobeSceneOptions {
   spinDegPerSec?: number;
   /** Perspective camera field-of-view in degrees (lower = flatter). Default `45`. */
   cameraFov?: number;
+  /** Camera projection. `'orthographic'` matches the flat globe's parallel projection (no perspective bulge). Default `'perspective'`. */
+  projection?: 'perspective' | 'orthographic';
   onReady?: (scene: GlobeScene) => void;
   onLoad?: () => void;
   onPoiClick?: (poi: POI) => void;
@@ -358,6 +360,8 @@ export interface InteractiveGlobeProps {
   spinDegPerSec?: number;
   /** Perspective camera field-of-view in degrees (webgl only; lower = flatter, toward the flat globe's orthographic look). Default `45`. */
   cameraFov?: number;
+  /** Camera projection (webgl only). `'orthographic'` matches the flat globe's parallel projection (no perspective bulge). Default `'perspective'`. */
+  projection?: 'perspective' | 'orthographic';
   className?: string;
   style?: CSSProperties;
   onReady?: (scene: GlobeScene) => void;

@@ -75,6 +75,7 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
     idleTiltDeg,
     spinDegPerSec,
     cameraFov,
+    projection,
     className      = '',
     style,
     onReady,
@@ -120,6 +121,7 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
     if (idleTiltDeg != null) sceneOpts.idleTiltDeg = idleTiltDeg;
     if (spinDegPerSec != null) sceneOpts.spinDegPerSec = spinDegPerSec;
     if (cameraFov != null) sceneOpts.cameraFov = cameraFov;
+    if (projection != null) sceneOpts.projection = projection;
     const scene = new GlobeScene(canvasRef.current, labelsRef.current, sceneOpts);
     sceneRef.current = scene;
     return () => { scene.dispose(); sceneRef.current = null; };

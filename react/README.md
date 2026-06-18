@@ -86,6 +86,7 @@ All optional.
 | `idleTiltDeg`    | `number`                              | `12`                   | Latitude shown at the disc centre while auto-rotating (both modes). |
 | `spinDegPerSec`  | `number`                              | `6`                    | Auto-rotation speed in degrees/second (both modes, frame-rate independent). |
 | `cameraFov`      | `number`                              | `45`                   | Perspective field-of-view in degrees (webgl only). Lower = flatter, toward the flat globe's orthographic look. |
+| `projection`     | `'perspective' \| 'orthographic'`     | `'perspective'`        | Camera projection (webgl only). `orthographic` = parallel projection matching the flat globe (no centre bulge). |
 | `className`      | `string`                              |                        | Forwarded to the wrapper. |
 | `style`          | `CSSProperties`                       |                        | Forwarded to the wrapper. |
 | `onReady`        | `(api) => void`                       |                        | Fires once scene is constructed. |

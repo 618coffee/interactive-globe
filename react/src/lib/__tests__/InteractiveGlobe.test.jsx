@@ -715,5 +715,15 @@ describe('idleTiltDeg / spinDegPerSec / cameraFov', () => {
     rerender(<InteractiveGlobe ui="none" idleTiltDeg={30} />);
     expect(sceneInstances[0].calls.setOptions).toContainEqual({ idleTiltDeg: 30 });
   });
+
+  it('forwards the projection option to the GlobeScene', async () => {
+    await renderAndLoad(<InteractiveGlobe ui="none" projection="orthographic" />);
+    expect(sceneInstances[0].options.projection).toBe('orthographic');
+  });
+
+  it('omits projection when not provided', async () => {
+    await renderAndLoad(<InteractiveGlobe ui="none" />);
+    expect(sceneInstances[0].options.projection).toBeUndefined();
+  });
 });
 

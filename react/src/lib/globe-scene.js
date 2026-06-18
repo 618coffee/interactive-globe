@@ -163,6 +163,7 @@ export class GlobeScene {
       idleTiltDeg: DEFAULT_IDLE_TILT_DEG,
       spinDegPerSec: DEFAULT_SPIN_DEG_PER_SEC,
       cameraFov: DEFAULT_FOV,
+      projection: 'perspective',
       onReady: null,
       onLoad: null,
       onPoiClick: null,
@@ -233,7 +234,9 @@ export class GlobeScene {
 
     const w = this.canvas.clientWidth || 1;
     const h = this.canvas.clientHeight || 1;
-    this.camera = new THREE.PerspectiveCamera(this.options.cameraFov, w / h, 0.05, 2000);
+    this.camera = this.options.projection === 'orthographic'
+      ? new THREE.OrthographicCamera(-1, 1, 1, -1, 0.05, 2000)
+      : new THREE.PerspectiveCamera(this.options.cameraFov, w / h, 0.05, 2000);
     this.camera.position.copy(idleCameraVec(this.options.idleTiltDeg));
 
     this.controls = new OrbitControls(this.camera, this.canvas);
@@ -957,6 +960,20 @@ export class GlobeScene {
     const h = this.canvas.clientHeight || window.innerHeight;
     const radiusPx = Math.min((fit.wRatio ?? 0.42) * w, (fit.hRatio ?? 0.58) * h);
     if (radiusPx <= 0) return;
+    if (this.camera.isOrthographicCamera) {
+      // Parallel projection: size comes from the frustum, not distance. The
+      // viewport height h spans the frustum height, so map the unit-sphere
+      // radius to radiusPx with a half-height of h / (2 * radiusPx).
+      const halfH = h / (2 * radiusPx);
+      const halfW = halfH * (w / h);
+      this.camera.left = -halfW;
+      this.camera.right = halfW;
+      this.camera.top = halfH;
+      this.camera.bottom = -halfH;
+      this.camera.updateProjectionMatrix();
+      this.controls.update();
+      return;
+    }
     const tanAlpha = (2 * radiusPx * Math.tan((this.camera.fov * Math.PI) / 360)) / h;
     if (tanAlpha <= 0) return;
     const dist = Math.sqrt(1 + tanAlpha * tanAlpha) / tanAlpha; // sphere radius 1

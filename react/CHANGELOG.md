@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.14.1] - 2026-06-18
+
+### Added
+- **`projection` prop (`'perspective' | 'orthographic'`, default `'perspective'`,
+  webgl only).** `'orthographic'` renders the webgl globe with a parallel
+  projection — no perspective bulge — matching the flat globe's look. It's sized via
+  the orthographic frustum, so the on-screen radius still honours `fit`.
+
 ## [0.14.0] - 2026-06-18
 
 ### Added
