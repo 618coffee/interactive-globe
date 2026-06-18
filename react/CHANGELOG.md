@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-06-18
+
+### Added
+- **`idleTiltDeg`, `spinDegPerSec`, and `cameraFov` props** to tune the globe's
+  look without forking the package. `idleTiltDeg` (default `12`) is the latitude
+  shown at the disc centre while auto-rotating (both modes); `spinDegPerSec`
+  (default `6`) is the auto-rotation speed (both modes, frame-rate independent);
+  `cameraFov` (default `45`, webgl only) is the perspective field-of-view — lower
+  values flatten the perspective toward the flat globe's orthographic look. All
+  three are reactive (change them live via a re-render / `setOptions`).
+
 ## [0.13.3] - 2026-06-18
 
 ### Fixed

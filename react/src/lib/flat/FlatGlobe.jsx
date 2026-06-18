@@ -18,10 +18,10 @@ import {
   spinLongitude,
 } from './flat-globe-math.js';
 
-const SPIN_DEG_PER_SEC = 6;
-const IDLE_TILT = -12;
+const DEFAULT_SPIN_DEG_PER_SEC = 6;
+const DEFAULT_IDLE_TILT_DEG = 12;
 const DEFAULT_FLY_MS = 2600;
-const INITIAL_ROTATION = [-20, IDLE_TILT];
+const INITIAL_LON = -20;
 
 const EASINGS = {
   linear: (t) => t,
@@ -53,6 +53,8 @@ export const FlatGlobe = forwardRef(function FlatGlobe(props, ref) {
     showMarkers = true,
     fit,
     initialView,
+    spinDegPerSec = DEFAULT_SPIN_DEG_PER_SEC,
+    idleTiltDeg = DEFAULT_IDLE_TILT_DEG,
     onLoad,
     onReady,
     className = '',
@@ -82,7 +84,7 @@ export const FlatGlobe = forwardRef(function FlatGlobe(props, ref) {
   const bordersRef = useRef(null);
   const cityRefs = useRef([]);
 
-  const rotationRef = useRef([...INITIAL_ROTATION]);
+  const rotationRef = useRef([INITIAL_LON, -idleTiltDeg]);
   const animRef = useRef(null); // { from, to, start, dur, ease }
   const activeTargetRef = useRef(null); // { lat, lon } of the last flyTo
 
@@ -92,11 +94,15 @@ export const FlatGlobe = forwardRef(function FlatGlobe(props, ref) {
   const poisRef = useRef(pois);
   const showMarkersRef = useRef(showMarkers);
   const onLoadRef = useRef(onLoad);
+  const spinDegPerSecRef = useRef(spinDegPerSec);
+  const idleTiltDegRef = useRef(idleTiltDeg);
   useEffect(() => {
     autoRotateRef.current = autoRotate;
     poisRef.current = pois;
     showMarkersRef.current = showMarkers;
     onLoadRef.current = onLoad;
+    spinDegPerSecRef.current = spinDegPerSec;
+    idleTiltDegRef.current = idleTiltDeg;
   });
 
   // Imperative handle (stable identity; closes over the refs above).
@@ -119,7 +125,7 @@ export const FlatGlobe = forwardRef(function FlatGlobe(props, ref) {
         const first = poisRef.current[0];
         rotationRef.current = first
           ? rotationForCity(first.lat, first.lon)
-          : [...INITIAL_ROTATION];
+          : [INITIAL_LON, -idleTiltDegRef.current];
       },
       getInfo: () => ({
         lat: -rotationRef.current[1],
@@ -217,8 +223,8 @@ export const FlatGlobe = forwardRef(function FlatGlobe(props, ref) {
       const anim = animRef.current;
       if (autoRotateRef.current) {
         rot = [
-          spinLongitude(rot[0], dt, SPIN_DEG_PER_SEC),
-          rot[1] + (IDLE_TILT - rot[1]) * Math.min(1, dt / 400),
+          spinLongitude(rot[0], dt, spinDegPerSecRef.current),
+          rot[1] + (-idleTiltDegRef.current - rot[1]) * Math.min(1, dt / 400),
         ];
         animRef.current = null;
         activeTargetRef.current = null;

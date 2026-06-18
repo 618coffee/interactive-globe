@@ -72,6 +72,9 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
     fit,
     initialView,
     showLoader     = true,
+    idleTiltDeg,
+    spinDegPerSec,
+    cameraFov,
     className      = '',
     style,
     onReady,
@@ -90,6 +93,7 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
   const sceneRef  = useRef(null);
   const flatRef   = useRef(null);
   const texturesInitedRef = useRef(false);
+  const idleTiltInitedRef = useRef(false);
   const [toggles, setToggles] = useState({
     autoRotate, showClouds, showAtmosphere, showAurora, showLabels, showMarkers,
   });
@@ -113,6 +117,9 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
     if (textures) sceneOpts.textures = textures;
     if (graticule) sceneOpts.graticule = graticule;
     if (fit) sceneOpts.fit = fit;
+    if (idleTiltDeg != null) sceneOpts.idleTiltDeg = idleTiltDeg;
+    if (spinDegPerSec != null) sceneOpts.spinDegPerSec = spinDegPerSec;
+    if (cameraFov != null) sceneOpts.cameraFov = cameraFov;
     const scene = new GlobeScene(canvasRef.current, labelsRef.current, sceneOpts);
     sceneRef.current = scene;
     return () => { scene.dispose(); sceneRef.current = null; };
@@ -133,6 +140,14 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
   useEffect(() => { sceneRef.current?.setOptions({ graticule }); }, [JSON.stringify(graticule ?? null)]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { sceneRef.current?.setOptions({ fit }); }, [JSON.stringify(fit ?? null)]);
+  useEffect(() => { if (spinDegPerSec != null) sceneRef.current?.setOptions({ spinDegPerSec }); }, [spinDegPerSec]);
+  useEffect(() => { if (cameraFov != null) sceneRef.current?.setOptions({ cameraFov }); }, [cameraFov]);
+  // idleTiltDeg re-tilts the idle camera; skip the mount run so it doesn't clobber
+  // the initialView (rotation handoff) the scene was constructed with.
+  useEffect(() => {
+    if (!idleTiltInitedRef.current) { idleTiltInitedRef.current = true; return; }
+    if (idleTiltDeg != null) sceneRef.current?.setOptions({ idleTiltDeg });
+  }, [idleTiltDeg]);
   // Reset the loader when switching modes so the new globe shows its own load.
   useEffect(() => { setLoaded(false); }, [mode]);
   // Textures are applied once at construction; skip the mount-time run so we
@@ -189,6 +204,8 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
             showMarkers={toggles.showMarkers}
             fit={fit}
             initialView={initialView}
+            idleTiltDeg={idleTiltDeg}
+            spinDegPerSec={spinDegPerSec}
             onReady={(api) => { if (onReady) onReady(api); }}
             onLoad={() => { setLoaded(true); if (onLoad) onLoad(); }}
           />

@@ -53,4 +53,13 @@ describe('mode="flat"', () => {
     expect(info.lat).toBeCloseTo(30, 5);
     expect(info.lon).toBeCloseTo(100, 5);
   });
+
+  it('starts at the configured idleTiltDeg when idle', async () => {
+    const ref = createRef();
+    const { container } = render(
+      <InteractiveGlobe ref={ref} mode="flat" ui="none" idleTiltDeg={25} pois={[]} />,
+    );
+    await waitFor(() => expect(container.querySelector('.ig-flat')).not.toBeNull());
+    expect(ref.current.getInfo().lat).toBeCloseTo(25, 5);
+  });
 });

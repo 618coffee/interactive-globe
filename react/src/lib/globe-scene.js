@@ -20,12 +20,24 @@ const DEFAULT_TEXTURES = {
 // Align with the host site's theme token transition cadence for perceived sync.
 const THEME_TRANSITION_MS = 560;
 
-// Idle camera tilt: the latitude shown at the disc centre while auto-rotating.
-// Matches the flat globe's IDLE_TILT (-12 deg in its d3 rotate convention, i.e. a
-// +12 deg centre latitude) so both renderers spin at the same axial tilt.
-// _applyFit rescales the distance, so only this direction (elevation) matters.
-const IDLE_TILT_DEG = 12;
-const IDLE_CAMERA_Y = 3 * Math.tan((IDLE_TILT_DEG * Math.PI) / 180);
+// Defaults for the configurable "look" props. idleTiltDeg = latitude shown at the
+// disc centre while auto-rotating (matches the flat globe's tilt); spinDegPerSec =
+// auto-rotation speed (matches the flat globe); cameraFov = perspective amount.
+const DEFAULT_IDLE_TILT_DEG    = 12;
+const DEFAULT_SPIN_DEG_PER_SEC = 6;
+const DEFAULT_FOV              = 45;
+
+// Camera position whose elevation centres `tiltDeg` of latitude. _applyFit
+// rescales the distance, so only this direction (elevation) matters.
+function idleCameraVec(tiltDeg) {
+  return new THREE.Vector3(0, 3 * Math.tan((tiltDeg * Math.PI) / 180), 3);
+}
+
+// OrbitControls.autoRotateSpeed that yields `degPerSec` when update(dt) is used:
+// the per-second angle is 2*PI/60 * speed = 6*speed deg, so speed = degPerSec/6.
+function autoRotateSpeedFor(degPerSec) {
+  return degPerSec / 6;
+}
 
 function latLonToVec3(lat, lon, r = 1) {
   const { x, y, z } = latLonToCoords(lat, lon, r);
@@ -148,6 +160,9 @@ export class GlobeScene {
       exposure: 1.4,
       theme: 'dark',
       initialView: null,
+      idleTiltDeg: DEFAULT_IDLE_TILT_DEG,
+      spinDegPerSec: DEFAULT_SPIN_DEG_PER_SEC,
+      cameraFov: DEFAULT_FOV,
       onReady: null,
       onLoad: null,
       onPoiClick: null,
@@ -191,6 +206,15 @@ export class GlobeScene {
     this.controls.update();
   }
 
+  // Re-orient the idle camera to a new tilt (centre latitude), keeping the
+  // current longitude + distance. Used when `idleTiltDeg` changes live.
+  _applyIdleTilt(tiltDeg) {
+    const { lon } = this.getInfo();
+    const dist = this.camera.position.distanceTo(this.controls.target);
+    this.camera.position.copy(latLonToVec3(tiltDeg, lon, dist));
+    this.controls.update();
+  }
+
   // -------------------------------------------------------------- init
 
   _initRenderer() {
@@ -209,8 +233,8 @@ export class GlobeScene {
 
     const w = this.canvas.clientWidth || 1;
     const h = this.canvas.clientHeight || 1;
-    this.camera = new THREE.PerspectiveCamera(45, w / h, 0.05, 2000);
-    this.camera.position.set(0, IDLE_CAMERA_Y, 3);
+    this.camera = new THREE.PerspectiveCamera(this.options.cameraFov, w / h, 0.05, 2000);
+    this.camera.position.copy(idleCameraVec(this.options.idleTiltDeg));
 
     this.controls = new OrbitControls(this.camera, this.canvas);
     this.controls.enableDamping   = true;
@@ -223,10 +247,9 @@ export class GlobeScene {
     this.controls.enableZoom      = this.options.enableZoom;
     this.controls.enableRotate    = this.options.enableRotate;
     this.controls.autoRotate      = this.options.autoRotate;
-    // 6 deg/s to match the flat globe's SPIN_DEG_PER_SEC. With controls.update(dt)
-    // in the loop this is frame-rate independent (2*PI/60 * speed = 6*speed deg/s),
-    // so a 120Hz display doesn't spin faster than 60Hz.
-    this.controls.autoRotateSpeed = 1.0;
+    // Frame-rate independent via controls.update(dt) in the loop; the speed is
+    // derived from spinDegPerSec so it matches the flat globe (default 6 deg/s).
+    this.controls.autoRotateSpeed = autoRotateSpeedFor(this.options.spinDegPerSec);
 
     this.stars = makeStars();
     this.scene.add(this.stars);
@@ -590,6 +613,13 @@ export class GlobeScene {
     if ('autoRotate'   in partial) this.controls.autoRotate = partial.autoRotate;
     if ('enableZoom'   in partial) this.controls.enableZoom = partial.enableZoom;
     if ('enableRotate' in partial) this.controls.enableRotate = partial.enableRotate;
+    if ('spinDegPerSec' in partial) this.controls.autoRotateSpeed = autoRotateSpeedFor(partial.spinDegPerSec ?? DEFAULT_SPIN_DEG_PER_SEC);
+    if ('cameraFov' in partial) {
+      this.camera.fov = partial.cameraFov ?? DEFAULT_FOV;
+      this.camera.updateProjectionMatrix();
+      this._applyFit();
+    }
+    if ('idleTiltDeg' in partial) this._applyIdleTilt(partial.idleTiltDeg ?? DEFAULT_IDLE_TILT_DEG);
     const themeChanged = 'theme' in partial || 'themeColors' in partial;
     if (themeChanged) this._applyTheme();
     if ('pois'   in partial) this.setPois(partial.pois);
@@ -677,7 +707,7 @@ export class GlobeScene {
 
   reset() {
     this._tween(
-      this.camera.position.clone(), new THREE.Vector3(0, IDLE_CAMERA_Y, 3),
+      this.camera.position.clone(), idleCameraVec(this.options.idleTiltDeg),
       this.controls.target.clone(),  new THREE.Vector3(0, 0, 0),
       700,
     );

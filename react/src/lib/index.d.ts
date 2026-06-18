@@ -241,6 +241,12 @@ export interface GlobeSceneOptions {
   fit?: FitConfig;
   /** Start centered on this lat/lon (rotation handoff). See {@link InitialView}. */
   initialView?: InitialView;
+  /** Latitude (deg) shown at the disc centre while auto-rotating. Default `12`. */
+  idleTiltDeg?: number;
+  /** Auto-rotation speed in degrees/second (frame-rate independent). Default `6`. */
+  spinDegPerSec?: number;
+  /** Perspective camera field-of-view in degrees (lower = flatter). Default `45`. */
+  cameraFov?: number;
   onReady?: (scene: GlobeScene) => void;
   onLoad?: () => void;
   onPoiClick?: (poi: POI) => void;
@@ -346,6 +352,12 @@ export interface InteractiveGlobeProps {
   initialView?: InitialView;
   /** Show the built-in loading overlay while textures load. Default `true`. Set `false` to suppress it (e.g. when the caller cross-fades from a previous globe). */
   showLoader?: boolean;
+  /** Latitude (deg) shown at the disc centre while auto-rotating, both modes. Default `12`. */
+  idleTiltDeg?: number;
+  /** Auto-rotation speed in degrees/second, both modes (frame-rate independent). Default `6`. */
+  spinDegPerSec?: number;
+  /** Perspective camera field-of-view in degrees (webgl only; lower = flatter, toward the flat globe's orthographic look). Default `45`. */
+  cameraFov?: number;
   className?: string;
   style?: CSSProperties;
   onReady?: (scene: GlobeScene) => void;
