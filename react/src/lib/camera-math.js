@@ -38,3 +38,42 @@ export function slerpPosition(start, end, t) {
   }
   return { x: dx * r, y: dy * r, z: dz * r };
 }
+
+const DEG2RAD = Math.PI / 180;
+const RAD2DEG = 180 / Math.PI;
+
+/**
+ * Geographic (lat, lon) in degrees -> a point on a sphere of radius `r`, as a
+ * plain `{x,y,z}`. This is THE lat/lon convention for the globe: markers, labels,
+ * `flyTo` targets and the initial camera placement all use it, so
+ * {@link vec3ToLatLon} MUST be its exact inverse.
+ * @param {number} lat
+ * @param {number} lon
+ * @param {number} [r]
+ */
+export function latLonToCoords(lat, lon, r = 1) {
+  const phi = (90 - lat) * DEG2RAD;
+  const theta = (lon + 180) * DEG2RAD;
+  return {
+    x: -r * Math.sin(phi) * Math.cos(theta),
+    y: r * Math.cos(phi),
+    z: r * Math.sin(phi) * Math.sin(theta),
+  };
+}
+
+/**
+ * Inverse of {@link latLonToCoords}: the geographic point a camera at `{x,y,z}`
+ * (looking at the origin) is centered on. Returns `{ lat, lon }` in degrees with
+ * `lon` normalized to `(-180, 180]`. The `- 90` aligns the longitude with
+ * `latLonToCoords` (without it `getInfo` reads 90° east of the actual center,
+ * which broke cross-mode rotation handoff).
+ * @param {{x:number,y:number,z:number}} vec
+ */
+export function vec3ToLatLon({ x, y, z }) {
+  const r = Math.hypot(x, y, z) || 1;
+  const lat = 90 - Math.acos(Math.max(-1, Math.min(1, y / r))) * RAD2DEG;
+  let lon = Math.atan2(x, z) * RAD2DEG - 90;
+  lon = ((lon + 540) % 360) - 180;
+  return { lat, lon };
+}
+

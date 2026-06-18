@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.13.1] - 2026-06-18
+
+### Fixed
+- **`getInfo()` reported a longitude 90° east of the actual centered point.** It
+  now exactly inverts the marker / `flyTo` / `initialView` placement
+  (`latLonToVec3`), so reading `getInfo()` and feeding it straight back as
+  `initialView` — e.g. handing rotation from one globe to the next across a
+  theme/mode switch — keeps the longitude instead of drifting ~90° on every
+  `webgl`→`flat` handoff. The lat/lon↔vector math is centralized in
+  `camera-math.js` (`latLonToCoords` / `vec3ToLatLon`) with a round-trip test.
+
 ## [0.13.0] - 2026-06-18
 
 ### Added

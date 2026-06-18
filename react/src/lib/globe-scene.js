@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { resolveTheme } from './theme.js';
 import { resolveGraticule } from './graticule.js';
-import { slerpPosition } from './camera-math.js';
+import { slerpPosition, latLonToCoords, vec3ToLatLon } from './camera-math.js';
 
 // Real NASA Blue Marble Next Gen day map (8192×4096) + NASA cloud composite
 // (2048×1024), committed in this repo and served with CORS via jsDelivr-gh so the
@@ -21,13 +21,8 @@ const DEFAULT_TEXTURES = {
 const THEME_TRANSITION_MS = 560;
 
 function latLonToVec3(lat, lon, r = 1) {
-  const phi   = (90 - lat) * Math.PI / 180;
-  const theta = (lon + 180) * Math.PI / 180;
-  return new THREE.Vector3(
-    -r * Math.sin(phi) * Math.cos(theta),
-     r * Math.cos(phi),
-     r * Math.sin(phi) * Math.sin(theta)
-  );
+  const { x, y, z } = latLonToCoords(lat, lon, r);
+  return new THREE.Vector3(x, y, z);
 }
 
 // Named easing curves for camera tweens. Each maps a normalized time t in
@@ -713,10 +708,7 @@ export class GlobeScene {
   getInfo() {
     const dist = this.camera.position.distanceTo(this.controls.target);
     const o = this.camera.position.clone().sub(this.controls.target);
-    const r = o.length();
-    const lat = 90 - Math.acos(THREE.MathUtils.clamp(o.y / r, -1, 1)) * 180 / Math.PI;
-    let lon = Math.atan2(o.x, o.z) * 180 / Math.PI;
-    lon = ((lon + 540) % 360) - 180;
+    const { lat, lon } = vec3ToLatLon(o);
     const level = dist < 1.7 ? 'L3' : dist < 2.5 ? 'L2' : dist < 4.5 ? 'L1' : 'L0';
     return { lat, lon, dist, level };
   }
