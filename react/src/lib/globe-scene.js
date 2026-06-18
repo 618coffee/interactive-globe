@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { resolveTheme } from './theme.js';
 import { resolveGraticule } from './graticule.js';
+import { slerpPosition } from './camera-math.js';
 
 // Real NASA Blue Marble Next Gen day map (8192×4096) + NASA cloud composite
 // (2048×1024), committed in this repo and served with CORS via jsDelivr-gh so the
@@ -690,7 +691,7 @@ export class GlobeScene {
     this._tween(
       this.camera.position.clone(), target,
       this.controls.target.clone(), new THREE.Vector3(0, 0, 0),
-      durationMs, easing,
+      durationMs, easing, true,
     );
     this.controls.autoRotate = false;
     this.options.autoRotate  = false;
@@ -867,14 +868,21 @@ export class GlobeScene {
     }
   }
 
-  _tween(sPos, ePos, sTar, eTar, dur, easing) {
+  _tween(sPos, ePos, sTar, eTar, dur, easing, spherical = false) {
     const ease = resolveEasing(easing);
     const t0 = performance.now();
     const step = (t) => {
       if (this._disposed) return;
       const u = Math.min(1, (t - t0) / dur);
       const e = ease(u);
-      this.camera.position.lerpVectors(sPos, ePos, e);
+      if (spherical) {
+        // Constant-radius arc (slerp direction + lerp radius) so a same-distance
+        // flyTo is a pure rotation — no inward chord dip / apparent zoom.
+        const p = slerpPosition(sPos, ePos, e);
+        this.camera.position.set(p.x, p.y, p.z);
+      } else {
+        this.camera.position.lerpVectors(sPos, ePos, e);
+      }
       if (sTar && eTar) this.controls.target.lerpVectors(sTar, eTar, e);
       if (u < 1) requestAnimationFrame(step);
     };

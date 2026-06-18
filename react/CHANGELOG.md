@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.12.1] - 2026-06-18
+
+### Fixed
+- **`flyTo` no longer appears to zoom during a same-distance rotation.** The
+  camera tween interpolated position linearly, so the straight chord between two
+  equidistant points dipped inward mid-flight (an apparent zoom-in, then out).
+  `flyTo` now follows a constant-radius arc (slerp the direction, lerp the
+  radius), so a distance-less `flyTo` is a true pure rotation. `reset` / `zoom`
+  are unchanged.
+
 ## [0.12.0] - 2026-06-18
 
 ### Added
