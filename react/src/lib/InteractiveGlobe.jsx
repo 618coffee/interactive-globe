@@ -1,10 +1,14 @@
-import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import { forwardRef, lazy, Suspense, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { GlobeScene } from './globe-scene.js';
 import { GlobeUI } from './GlobeUI.jsx';
 import { DEFAULT_POIS } from './data/pois.js';
 import { DEFAULT_LABELS } from './data/labels.js';
 import { resolveStrings, resolveControls, resolvePanels, resolveInfoCard } from './strings.js';
 import './styles.css';
+
+// Flat (SVG/d3) globe renderer for `mode="flat"`. Lazily imported so its d3 +
+// world-atlas payload only loads when flat mode is actually used.
+const FlatGlobe = lazy(() => import('./flat/FlatGlobe.jsx').then((m) => ({ default: m.FlatGlobe })));
 
 /**
  * <InteractiveGlobe />
@@ -43,6 +47,7 @@ import './styles.css';
  */
 export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref) {
   const {
+    mode           = 'webgl',
     pois           = DEFAULT_POIS,
     labels         = DEFAULT_LABELS,
     ui             = 'full',
@@ -64,6 +69,7 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
     themeColors,
     textures,
     graticule,
+    fit,
     className      = '',
     style,
     onReady,
@@ -80,14 +86,16 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
   const canvasRef = useRef(null);
   const labelsRef = useRef(null);
   const sceneRef  = useRef(null);
+  const flatRef   = useRef(null);
   const texturesInitedRef = useRef(false);
   const [toggles, setToggles] = useState({
     autoRotate, showClouds, showAtmosphere, showAurora, showLabels, showMarkers,
   });
   const [loaded, setLoaded] = useState(false);
 
-  // ---- create scene once on mount ------------------------------------------
+  // ---- create the webgl scene (flat mode self-manages via <FlatGlobe/>) -----
   useEffect(() => {
+    if (mode === 'flat') return undefined;
     const sceneOpts = {
       pois, labels,
       autoRotate, enableZoom, enableRotate,
@@ -101,11 +109,12 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
     };
     if (textures) sceneOpts.textures = textures;
     if (graticule) sceneOpts.graticule = graticule;
+    if (fit) sceneOpts.fit = fit;
     const scene = new GlobeScene(canvasRef.current, labelsRef.current, sceneOpts);
     sceneRef.current = scene;
     return () => { scene.dispose(); sceneRef.current = null; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [mode]);
 
   // ---- forward reactive prop changes into the scene -------------------------
   useEffect(() => { sceneRef.current?.setOptions({ pois }); }, [pois]);
@@ -119,6 +128,10 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
   useEffect(() => { sceneRef.current?.setOptions({ themeColors }); }, [JSON.stringify(themeColors ?? null)]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { sceneRef.current?.setOptions({ graticule }); }, [JSON.stringify(graticule ?? null)]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { sceneRef.current?.setOptions({ fit }); }, [JSON.stringify(fit ?? null)]);
+  // Reset the loader when switching modes so the new globe shows its own load.
+  useEffect(() => { setLoaded(false); }, [mode]);
   // Textures are applied once at construction; skip the mount-time run so we
   // don't redundantly re-fetch them, then reload live on any later change (e.g.
   // a theme toggle swapping in a vintage map / back to the default).
@@ -146,13 +159,13 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
 
   // ---- imperative handle ----------------------------------------------------
   useImperativeHandle(ref, () => ({
-    reset:    () => sceneRef.current?.reset(),
+    reset:    () => (mode === 'flat' ? flatRef.current : sceneRef.current)?.reset(),
     zoomIn:   () => sceneRef.current?.zoom(0.78),
     zoomOut:  () => sceneRef.current?.zoom(1.28),
-    flyTo:    (lat, lon, dist, opts) => sceneRef.current?.flyTo(lat, lon, dist, opts),
-    getInfo:  () => sceneRef.current?.getInfo(),
-    getScene: () => sceneRef.current,
-  }), []);
+    flyTo:    (lat, lon, dist, opts) => (mode === 'flat' ? flatRef.current : sceneRef.current)?.flyTo(lat, lon, dist, opts),
+    getInfo:  () => (mode === 'flat' ? flatRef.current : sceneRef.current)?.getInfo(),
+    getScene: () => (mode === 'flat' ? flatRef.current : sceneRef.current) ?? null,
+  }), [mode]);
 
   return (
     <div
@@ -160,9 +173,28 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
       style={style}
       data-ui={ui}
       data-theme={theme}
+      data-mode={mode}
     >
-      <canvas ref={canvasRef} className="ig-canvas" />
-      <div ref={labelsRef} className="ig-labels-layer" />
+      {mode === 'flat' ? (
+        <Suspense fallback={null}>
+          <FlatGlobe
+            ref={flatRef}
+            pois={pois}
+            autoRotate={toggles.autoRotate}
+            graticule={graticule}
+            showLabels={toggles.showLabels}
+            showMarkers={toggles.showMarkers}
+            fit={fit}
+            onReady={(api) => { if (onReady) onReady(api); }}
+            onLoad={() => { setLoaded(true); if (onLoad) onLoad(); }}
+          />
+        </Suspense>
+      ) : (
+        <>
+          <canvas ref={canvasRef} className="ig-canvas" />
+          <div ref={labelsRef} className="ig-labels-layer" />
+        </>
+      )}
 
       {!loaded && (
         <div className="ig-loader">

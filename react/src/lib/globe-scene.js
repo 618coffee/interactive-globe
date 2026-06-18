@@ -168,6 +168,7 @@ export class GlobeScene {
     this._initLabels();
     this._initInteraction();
     this._applyVisibility();
+    this._applyFit();
     this._loop = this._loop.bind(this);
     this._rafId = requestAnimationFrame(this._loop);
 
@@ -576,6 +577,7 @@ export class GlobeScene {
     else if (themeChanged) this.setPois(this.options.pois); // rebuild markers in new palette
     if ('labels' in partial) this.setLabels(partial.labels);
     if ('graticule' in partial) this._applyGraticule();
+    if ('fit' in partial) this._applyFit();
     if ('textures' in partial) {
       // Re-resolve against the defaults so passing `textures: undefined` (e.g.
       // reverting to the built-in Blue Marble) restores every map, not wipes it.
@@ -674,13 +676,17 @@ export class GlobeScene {
    * Smoothly fly the camera to a lat/lon.
    * @param {number} lat
    * @param {number} lon
-   * @param {number} [distance=1.8]
+   * @param {number} [distance] Target camera distance. Omit to keep the CURRENT
+   *   distance — a pure rotation with no zoom change.
    * @param {{ durationMs?: number, easing?: ('linear'|'easeInCubic'|'easeOutCubic'|'easeInOutCubic'|((t:number)=>number)) }} [opts]
    *   `durationMs` defaults to 900; `easing` defaults to `'easeOutCubic'`.
    */
-  flyTo(lat, lon, distance = 1.8, opts = {}) {
+  flyTo(lat, lon, distance, opts = {}) {
     const { durationMs = 900, easing = 'easeOutCubic' } = opts;
-    const target = latLonToVec3(lat, lon, distance);
+    const dist = distance == null
+      ? this.camera.position.distanceTo(this.controls.target)
+      : distance;
+    const target = latLonToVec3(lat, lon, dist);
     this._tween(
       this.camera.position.clone(), target,
       this.controls.target.clone(), new THREE.Vector3(0, 0, 0),
@@ -883,6 +889,30 @@ export class GlobeScene {
       this.camera.aspect = w / h;
       this.camera.updateProjectionMatrix();
     }
+    this._applyFit();
+  }
+
+  /**
+   * When `options.fit` is set, size the camera so the globe's on-screen radius
+   * is `min(fit.wRatio·w, fit.hRatio·h)` px — matching the flat mode's radius so
+   * the two modes render at the same size. Camera FOV is 45°, sphere radius 1.
+   */
+  _applyFit() {
+    const fit = this.options.fit;
+    if (!fit || !this.camera || !this.controls) return;
+    const w = this.canvas.clientWidth  || window.innerWidth;
+    const h = this.canvas.clientHeight || window.innerHeight;
+    const radiusPx = Math.min((fit.wRatio ?? 0.42) * w, (fit.hRatio ?? 0.58) * h);
+    if (radiusPx <= 0) return;
+    const tanAlpha = (2 * radiusPx * Math.tan((this.camera.fov * Math.PI) / 360)) / h;
+    if (tanAlpha <= 0) return;
+    const dist = Math.sqrt(1 + tanAlpha * tanAlpha) / tanAlpha; // sphere radius 1
+    const cur = this.camera.position.distanceTo(this.controls.target) || 1;
+    this.camera.position
+      .sub(this.controls.target)
+      .multiplyScalar(dist / cur)
+      .add(this.controls.target);
+    this.controls.update();
   }
 
   _loop() {

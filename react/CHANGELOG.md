@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-06-18
+
+### Added
+- **`mode` prop (`'webgl' | 'flat'`, default `'webgl'`).** A second globe
+  renderer: `'flat'` is a lazy-loaded D3 `geoOrthographic` SVG globe — a warm
+  "paper map" with a graticule, world country outlines, and the `pois` rendered
+  as dots (the most-recently `flyTo`'d POI highlights amber with a label). It
+  honours `theme` (warm paper in light), `graticule.spacing`, `showMarkers`,
+  `showLabels`, and `autoRotate` (slow idle spin). Its d3 + world-atlas payload
+  only loads when flat mode is actually used. Backward compatible (default webgl).
+- **`fit` prop (`{ wRatio?, hRatio? }`).** Sizes the globe so its on-screen
+  radius is `min(wRatio·w, hRatio·h)` px, applied to **both** modes (webgl camera
+  distance / flat projection scale) so they render at the same size. New exported
+  `FitConfig` type.
+
+### Changed
+- **`flyTo(lat, lon)` with no `distance` now keeps the current camera distance**
+  — a pure rotation with no zoom change (pass an explicit `distance` to also
+  zoom, as before). Makes city-to-city tours rotate in place.
+
 ## [0.11.1] - 2026-06-14
 
 ### Improved

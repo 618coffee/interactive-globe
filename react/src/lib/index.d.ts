@@ -191,6 +191,17 @@ export interface GraticuleConfig {
   opacity?: number;
 }
 
+/**
+ * Size the globe so its on-screen radius is `min(wRatio·w, hRatio·h)` px (w/h =
+ * container size). Applied to both `'webgl'` (camera distance) and `'flat'`
+ * (projection scale) modes so they render at the same size. Defaults: `wRatio`
+ * 0.42, `hRatio` 0.58.
+ */
+export interface FitConfig {
+  wRatio?: number;
+  hRatio?: number;
+}
+
 export interface GlobeSceneOptions {
   pois?: POI[];
   labels?: LabelItem[];
@@ -213,6 +224,8 @@ export interface GlobeSceneOptions {
   themeColors?: ThemeColors;
   textures?: Partial<GlobeTextures>;
   graticule?: GraticuleConfig;
+  /** Match the on-screen globe radius across modes. See {@link FitConfig}. */
+  fit?: FitConfig;
   onReady?: (scene: GlobeScene) => void;
   onLoad?: () => void;
   onPoiClick?: (poi: POI) => void;
@@ -239,7 +252,10 @@ export class GlobeScene {
 
   reset(): void;
   zoom(factor: number): void;
-  /** Smoothly fly the camera to a lat/lon. Disables auto-rotate. */
+  /**
+   * Smoothly fly the camera to a lat/lon. Disables auto-rotate. Omit `distance`
+   * to keep the current distance — a pure rotation with no zoom change.
+   */
   flyTo(lat: number, lon: number, distance?: number, opts?: FlyToOptions): void;
   getInfo(): GlobeInfo;
 
@@ -261,6 +277,14 @@ export interface InteractiveGlobeHandle {
 }
 
 export interface InteractiveGlobeProps {
+  /**
+   * Globe renderer. `'webgl'` (default) is the Three.js textured planet;
+   * `'flat'` is a lazy-loaded D3 `geoOrthographic` SVG globe (graticule +
+   * country outlines + POI dots, the most-recently `flyTo`'d POI highlighted).
+   * In flat mode `flyTo` rotates the globe (never zooms) and `getScene()`
+   * returns the flat controller (no Three.js scene).
+   */
+  mode?: 'webgl' | 'flat';
   pois?: POI[];
   labels?: LabelItem[];
   /** Coarse preset: `'full'` keeps all chrome, `'minimal'` only the bottom bar, `'none'` strips all UI. */
@@ -301,6 +325,8 @@ export interface InteractiveGlobeProps {
   textures?: Partial<GlobeTextures>;
   /** Lat/lon graticule overlay (off by default). */
   graticule?: GraticuleConfig;
+  /** Match the on-screen globe radius across modes. See {@link FitConfig}. */
+  fit?: FitConfig;
   className?: string;
   style?: CSSProperties;
   onReady?: (scene: GlobeScene) => void;
