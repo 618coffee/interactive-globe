@@ -52,6 +52,7 @@ export const FlatGlobe = forwardRef(function FlatGlobe(props, ref) {
     showLabels = true,
     showMarkers = true,
     fit,
+    initialView,
     onLoad,
     onReady,
     className = '',
@@ -130,10 +131,15 @@ export const FlatGlobe = forwardRef(function FlatGlobe(props, ref) {
   }
   useImperativeHandle(ref, () => apiRef.current, []);
 
-  // Start centred on the first POI so the idle / reduced-motion view is sensible.
+  // Start centred on `initialView` (cross-mode rotation handoff) when provided,
+  // else on the first POI so the idle / reduced-motion view is sensible.
   useEffect(() => {
-    const first = pois[0];
-    if (first) rotationRef.current = rotationForCity(first.lat, first.lon);
+    if (initialView && Number.isFinite(initialView.lat) && Number.isFinite(initialView.lon)) {
+      rotationRef.current = rotationForCity(initialView.lat, initialView.lon);
+    } else {
+      const first = pois[0];
+      if (first) rotationRef.current = rotationForCity(first.lat, first.lon);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

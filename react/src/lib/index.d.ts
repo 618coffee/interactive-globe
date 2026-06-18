@@ -55,6 +55,19 @@ export interface GlobeInfo {
   level: 'L0' | 'L1' | 'L2' | 'L3';
 }
 
+/**
+ * Starting view for a freshly-mounted globe: the geographic point centered
+ * toward the viewer on the first frame. Lets a new globe inherit the rotation
+ * of a previous one (e.g. across a theme/mode switch) with no visible jump.
+ * Matches the `{ lat, lon }` shape returned by {@link InteractiveGlobeHandle.getInfo}.
+ */
+export interface InitialView {
+  /** Latitude in degrees, -90 to 90 */
+  lat: number;
+  /** Longitude in degrees, -180 to 180 */
+  lon: number;
+}
+
 /** Built-in easing-curve names accepted by {@link FlyToOptions.easing}. */
 export type EasingName = 'linear' | 'easeInCubic' | 'easeOutCubic' | 'easeInOutCubic';
 
@@ -226,6 +239,8 @@ export interface GlobeSceneOptions {
   graticule?: GraticuleConfig;
   /** Match the on-screen globe radius across modes. See {@link FitConfig}. */
   fit?: FitConfig;
+  /** Start centered on this lat/lon (rotation handoff). See {@link InitialView}. */
+  initialView?: InitialView;
   onReady?: (scene: GlobeScene) => void;
   onLoad?: () => void;
   onPoiClick?: (poi: POI) => void;
@@ -327,6 +342,10 @@ export interface InteractiveGlobeProps {
   graticule?: GraticuleConfig;
   /** Match the on-screen globe radius across modes. See {@link FitConfig}. */
   fit?: FitConfig;
+  /** Start centered on this lat/lon (rotation handoff). See {@link InitialView}. */
+  initialView?: InitialView;
+  /** Show the built-in loading overlay while textures load. Default `true`. Set `false` to suppress it (e.g. when the caller cross-fades from a previous globe). */
+  showLoader?: boolean;
   className?: string;
   style?: CSSProperties;
   onReady?: (scene: GlobeScene) => void;

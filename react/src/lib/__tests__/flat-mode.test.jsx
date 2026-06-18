@@ -36,4 +36,21 @@ describe('mode="flat"', () => {
     expect(ref.current.getInfo()).toMatchObject({ level: 'L2' });
     expect(ref.current.getScene()).not.toBeNull();
   });
+
+  it('starts centered on initialView, overriding the default first-POI view', async () => {
+    const ref = createRef();
+    const { container } = render(
+      <InteractiveGlobe
+        ref={ref}
+        mode="flat"
+        ui="none"
+        initialView={{ lat: 30, lon: 100 }}
+        pois={[{ name: 'Origin', lat: 0, lon: 0 }]}
+      />,
+    );
+    await waitFor(() => expect(container.querySelector('.ig-flat')).not.toBeNull());
+    const info = ref.current.getInfo();
+    expect(info.lat).toBeCloseTo(30, 5);
+    expect(info.lon).toBeCloseTo(100, 5);
+  });
 });

@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-06-18
+
+### Added
+- **`initialView` prop (`{ lat, lon }`).** Starts the globe centered on a given
+  geographic point on its first frame, in both modes (webgl camera placement /
+  flat projection rotation). Lets a freshly-mounted globe inherit the rotation of
+  a previous one — e.g. read `getInfo()` from the outgoing globe before a theme
+  switch and pass it as `initialView` to the incoming one for a seamless,
+  jump-free handoff. Omitted ⇒ the previous default (first POI / fixed angle).
+- **`showLoader` prop (`boolean`, default `true`).** Set `false` to suppress the
+  built-in loading overlay (e.g. when the host cross-fades from a previously
+  rendered globe and doesn't want a spinner flashing during the swap).
+
 ## [0.12.1] - 2026-06-18
 
 ### Fixed

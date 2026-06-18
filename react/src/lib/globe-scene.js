@@ -145,6 +145,7 @@ export class GlobeScene {
       showMarkers: true,
       exposure: 1.4,
       theme: 'dark',
+      initialView: null,
       onReady: null,
       onLoad: null,
       onPoiClick: null,
@@ -170,10 +171,22 @@ export class GlobeScene {
     this._initInteraction();
     this._applyVisibility();
     this._applyFit();
+    this._applyInitialView();
     this._loop = this._loop.bind(this);
     this._rafId = requestAnimationFrame(this._loop);
 
     if (this.options.onReady) this.options.onReady(this);
+  }
+
+  // Center the camera on a starting lat/lon (cross-mode rotation handoff).
+  // Keeps the fitted distance — same end-state as flyTo, applied instantly so
+  // the globe renders pre-rotated on the first frame.
+  _applyInitialView() {
+    const v = this.options.initialView;
+    if (!v || !Number.isFinite(v.lat) || !Number.isFinite(v.lon)) return;
+    const dist = this.camera.position.distanceTo(this.controls.target);
+    this.camera.position.copy(latLonToVec3(v.lat, v.lon, dist));
+    this.controls.update();
   }
 
   // -------------------------------------------------------------- init

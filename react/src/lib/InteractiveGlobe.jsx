@@ -70,6 +70,8 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
     textures,
     graticule,
     fit,
+    initialView,
+    showLoader     = true,
     className      = '',
     style,
     onReady,
@@ -103,6 +105,7 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
       exposure,
       theme,
       themeColors,
+      initialView,
       onReady: (api) => { if (onReady) onReady(api); },
       onLoad:  () => { setLoaded(true); if (onLoad) onLoad(); },
       onPoiClick,
@@ -185,6 +188,7 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
             showLabels={toggles.showLabels}
             showMarkers={toggles.showMarkers}
             fit={fit}
+            initialView={initialView}
             onReady={(api) => { if (onReady) onReady(api); }}
             onLoad={() => { setLoaded(true); if (onLoad) onLoad(); }}
           />
@@ -196,7 +200,7 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
         </>
       )}
 
-      {!loaded && (
+      {showLoader && !loaded && (
         <div className="ig-loader">
           <div className="ig-loader-ring" />
           <div className="ig-loader-text">{t.loadingText}</div>

@@ -81,6 +81,8 @@ All optional.
 | `showMarkers`    | `boolean`                             | `true`                 | |
 | `exposure`       | `number`                              | `1.4`                  | Renderer tone-mapping exposure (brightness). |
 | `textures`       | `{ day, spec, bump, clouds }`         | 8K Blue Marble set     | URL overrides. |
+| `initialView`    | `{ lat, lon }`                        |                        | Start centered on this point on the first frame (both modes). Pass the outgoing globe's `getInfo()` here for a jump-free rotation handoff across a theme/mode switch. |
+| `showLoader`     | `boolean`                             | `true`                 | Built-in loading overlay. Set `false` to suppress it (e.g. when cross-fading from a previously rendered globe). |
 | `className`      | `string`                              |                        | Forwarded to the wrapper. |
 | `style`          | `CSSProperties`                       |                        | Forwarded to the wrapper. |
 | `onReady`        | `(api) => void`                       |                        | Fires once scene is constructed. |

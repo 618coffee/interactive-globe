@@ -653,3 +653,35 @@ describe('textures prop', () => {
   });
 });
 
+// ==================================================================
+// initialView (rotation handoff) — webgl
+// ==================================================================
+describe('initialView prop (webgl)', () => {
+  it('forwards initialView to the GlobeScene at construction', async () => {
+    await renderAndLoad(<InteractiveGlobe ui="none" initialView={{ lat: 30, lon: 100 }} />);
+    expect(sceneInstances).toHaveLength(1);
+    expect(sceneInstances[0].options.initialView).toEqual({ lat: 30, lon: 100 });
+  });
+
+  it('leaves initialView undefined when not provided', async () => {
+    await renderAndLoad(<InteractiveGlobe ui="none" />);
+    expect(sceneInstances[0].options.initialView).toBeUndefined();
+  });
+});
+
+// ==================================================================
+// showLoader prop (loader gate is mode-agnostic; flat keeps `loaded`
+// false synchronously so the gate is deterministic)
+// ==================================================================
+describe('showLoader prop', () => {
+  it('renders the loading overlay by default while not yet loaded', () => {
+    const { container } = render(<InteractiveGlobe mode="flat" ui="none" />);
+    expect(container.querySelector('.ig-loader')).not.toBeNull();
+  });
+
+  it('suppresses the loading overlay when showLoader={false}', () => {
+    const { container } = render(<InteractiveGlobe mode="flat" ui="none" showLoader={false} />);
+    expect(container.querySelector('.ig-loader')).toBeNull();
+  });
+});
+
