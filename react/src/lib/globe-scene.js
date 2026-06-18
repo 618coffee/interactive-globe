@@ -223,7 +223,10 @@ export class GlobeScene {
     this.controls.enableZoom      = this.options.enableZoom;
     this.controls.enableRotate    = this.options.enableRotate;
     this.controls.autoRotate      = this.options.autoRotate;
-    this.controls.autoRotateSpeed = 0.35;
+    // 6 deg/s to match the flat globe's SPIN_DEG_PER_SEC. With controls.update(dt)
+    // in the loop this is frame-rate independent (2*PI/60 * speed = 6*speed deg/s),
+    // so a 120Hz display doesn't spin faster than 60Hz.
+    this.controls.autoRotateSpeed = 1.0;
 
     this.stars = makeStars();
     this.scene.add(this.stars);
@@ -959,7 +962,7 @@ export class GlobeScene {
       }
     }
 
-    this.controls.update();
+    this.controls.update(dt);
     this._updateLabels();
     this.renderer.render(this.scene, this.camera);
   }

@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.13.3] - 2026-06-18
+
+### Fixed
+- **The webgl globe's idle auto-rotation now matches the flat globe's speed and
+  is frame-rate independent.** It spun ~4.2 deg/s on a 120Hz display (and ~2.1 deg/s
+  on 60Hz) because `controls.update()` ran without a delta time, while the flat
+  globe spins a steady 6 deg/s. The loop now passes the frame delta to
+  `controls.update(dt)` and `autoRotateSpeed` is set so both modes rotate at
+  6 deg/s on any display.
+
 ## [0.13.2] - 2026-06-18
 
 ### Changed
