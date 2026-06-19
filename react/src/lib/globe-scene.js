@@ -305,10 +305,23 @@ export class GlobeScene {
     );
     this.scene.add(this.clouds);
 
+    // The rim-glow shader approximates the silhouette with a constant view
+    // direction (0,0,1) — a parallel-projection assumption. Under a perspective
+    // camera the true silhouette never reaches dot==0, so the visible rim peaked
+    // well below the `0.6` factor (~0.13 at the fit distance). Orthographic makes
+    // that assumption exact, so the full 0.6 became visible and the halo looked
+    // far brighter. Scale the intensity down for orthographic — a touch above the
+    // ~0.13 perspective match so the glow reads as a soft rim without the harsh
+    // full-strength halo.
+    const atmosphereIntensity =
+      this.options.projection === 'orthographic' ? 0.18 : 0.6;
     this.atmosphere = new THREE.Mesh(
       new THREE.SphereGeometry(1.07, 64, 64),
       new THREE.ShaderMaterial({
-        uniforms: { glowColor: { value: new THREE.Color(0x4fc3ff) } },
+        uniforms: {
+          glowColor: { value: new THREE.Color(0x4fc3ff) },
+          uIntensity: { value: atmosphereIntensity },
+        },
         vertexShader: `
           varying vec3 vNormal;
           void main() {
@@ -318,9 +331,10 @@ export class GlobeScene {
         fragmentShader: `
           varying vec3 vNormal;
           uniform vec3 glowColor;
+          uniform float uIntensity;
           void main() {
             float f = pow(1.0 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 3.0);
-            gl_FragColor = vec4(glowColor, 1.0) * f * 0.6;
+            gl_FragColor = vec4(glowColor, 1.0) * f * uIntensity;
           }`,
         side: THREE.BackSide,
         blending: THREE.AdditiveBlending,

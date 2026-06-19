@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.14.2] - 2026-06-18
+
+### Fixed
+- **Atmosphere halo too bright under `projection: 'orthographic'`.** The rim-glow
+  shader approximates the silhouette with a constant view direction (`(0,0,1)`, a
+  parallel-projection assumption). Under a perspective camera the true silhouette
+  never reached `dot==0`, so the visible rim peaked well below the shader's `0.6`
+  factor; orthographic made that assumption exact and exposed the full-strength
+  halo. The orthographic glow intensity is now scaled down (to `0.18`) so the
+  atmosphere reads as a soft rim instead of a hard ring. Perspective is unchanged.
+
 ## [0.14.1] - 2026-06-18
 
 ### Added
