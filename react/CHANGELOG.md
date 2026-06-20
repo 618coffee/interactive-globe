@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.14.3] - 2026-06-20
+
+### Added
+- **`markerSize` prop** (`GlobeSceneOptions.markerSize` + `InteractiveGlobeProps.markerSize`)
+  — a marker dot size multiplier (`1` = the current default, `<1` = smaller). Applies to
+  both modes: webgl scales the marker sprite (`scale.setScalar((0.055 + p*0.018) * markerSize)`)
+  and flat scales the city dot + halo radii (`r = 3.5 / 15 * markerSize`). Reactive. Lets
+  callers shrink dense marker clusters so nearby pins don't overlap.
+
 ## [0.14.2] - 2026-06-18
 
 ### Fixed

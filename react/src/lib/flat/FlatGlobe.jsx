@@ -55,6 +55,7 @@ export const FlatGlobe = forwardRef(function FlatGlobe(props, ref) {
     initialView,
     spinDegPerSec = DEFAULT_SPIN_DEG_PER_SEC,
     idleTiltDeg = DEFAULT_IDLE_TILT_DEG,
+    markerSize = 1,
     onLoad,
     onReady,
     className = '',
@@ -283,8 +284,8 @@ export const FlatGlobe = forwardRef(function FlatGlobe(props, ref) {
               cityRefs.current[i] = el;
             }}
           >
-            <circle className="ig-flat-city-halo" r="15" filter={`url(#${glowId})`} />
-            <circle className="ig-flat-city-dot" r="3.5" />
+            <circle className="ig-flat-city-halo" r={15 * markerSize} filter={`url(#${glowId})`} />
+            <circle className="ig-flat-city-dot" r={3.5 * markerSize} />
             {showLabels && (
               <text className="ig-flat-city-label" x="11" y="4">
                 {poi.name}

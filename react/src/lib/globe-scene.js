@@ -157,6 +157,7 @@ export class GlobeScene {
       showAurora: true,
       showLabels: true,
       showMarkers: true,
+      markerSize: 1,
       exposure: 1.4,
       theme: 'dark',
       initialView: null,
@@ -1016,9 +1017,10 @@ export class GlobeScene {
     this.auroraMat.uniforms.uTime.value = t;
 
     if (this.options.showMarkers) {
+      const markerScale = this.options.markerSize ?? 1;
       for (const m of this.markerMeshes) {
         const p = (Math.sin(t * 2.2 + m.userData.phase) * 0.5 + 0.5);
-        m.scale.setScalar(0.055 + p * 0.018);
+        m.scale.setScalar((0.055 + p * 0.018) * markerScale);
         m.material.opacity = 0.55 + p * 0.45;
       }
     }

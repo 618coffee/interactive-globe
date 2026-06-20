@@ -75,6 +75,7 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
     idleTiltDeg,
     spinDegPerSec,
     cameraFov,
+    markerSize,
     projection,
     className      = '',
     style,
@@ -121,6 +122,7 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
     if (idleTiltDeg != null) sceneOpts.idleTiltDeg = idleTiltDeg;
     if (spinDegPerSec != null) sceneOpts.spinDegPerSec = spinDegPerSec;
     if (cameraFov != null) sceneOpts.cameraFov = cameraFov;
+    if (markerSize != null) sceneOpts.markerSize = markerSize;
     if (projection != null) sceneOpts.projection = projection;
     const scene = new GlobeScene(canvasRef.current, labelsRef.current, sceneOpts);
     sceneRef.current = scene;
@@ -144,6 +146,7 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
   useEffect(() => { sceneRef.current?.setOptions({ fit }); }, [JSON.stringify(fit ?? null)]);
   useEffect(() => { if (spinDegPerSec != null) sceneRef.current?.setOptions({ spinDegPerSec }); }, [spinDegPerSec]);
   useEffect(() => { if (cameraFov != null) sceneRef.current?.setOptions({ cameraFov }); }, [cameraFov]);
+  useEffect(() => { if (markerSize != null) sceneRef.current?.setOptions({ markerSize }); }, [markerSize]);
   // idleTiltDeg re-tilts the idle camera; skip the mount run so it doesn't clobber
   // the initialView (rotation handoff) the scene was constructed with.
   useEffect(() => {
@@ -208,6 +211,7 @@ export const InteractiveGlobe = forwardRef(function InteractiveGlobe(props, ref)
             initialView={initialView}
             idleTiltDeg={idleTiltDeg}
             spinDegPerSec={spinDegPerSec}
+            markerSize={markerSize}
             onReady={(api) => { if (onReady) onReady(api); }}
             onLoad={() => { setLoaded(true); if (onLoad) onLoad(); }}
           />
