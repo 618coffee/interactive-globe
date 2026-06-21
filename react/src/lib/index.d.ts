@@ -174,17 +174,22 @@ export interface InfoCardConfig {
 /**
  * Caller-provided color overrides merged on top of the active theme preset.
  * Lets you pick the exact sky / marker colors without the package shipping a
- * catalog of style presets. Semantic choices (which layers are visible, marker
- * blending) stay tied to `theme` and are not overridable here.
+ * catalog of style presets. Which layers are visible stays tied to `theme`.
  */
 export interface ThemeColors {
   /** Sky / scene background. CSS color string (e.g. `'#f4efe7'`) or `0xRRGGBB` int. */
   background?: number | string;
-  /** Marker sprite colors, merged onto the theme's marker palette. */
+  /** Marker sprite colors + blending, merged onto the theme's marker palette. */
   marker?: {
     color?: string;
     highlight?: string;
     core?: string;
+    /**
+     * How marker sprites composite over the globe. `'additive'` (the dark theme
+     * default) glows on dark surfaces but washes out on bright day-map textures;
+     * `'normal'` keeps solid, opaque pins. Defaults to the active theme's value.
+     */
+    blending?: 'normal' | 'additive';
   };
 }
 

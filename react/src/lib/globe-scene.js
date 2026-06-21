@@ -71,26 +71,26 @@ const rgba = ({ r, g, b }, a) => `rgba(${r}, ${g}, ${b}, ${a})`;
 function makeMarkerTexture(palette = { color: '#8cebff', highlight: '#befaff', core: '#dcfaff' }) {
   const base = hexToRgb(palette.color);
   const hi   = hexToRgb(palette.highlight);
-  const core = hexToRgb(palette.core);
   const size = 128;
   const c = document.createElement('canvas');
   c.width = c.height = size;
   const ctx = c.getContext('2d');
   const cx = size / 2, cy = size / 2;
-  ctx.strokeStyle = rgba(base, 0.95);
-  ctx.lineWidth = 3;
-  ctx.beginPath(); ctx.arc(cx, cy, 38, 0, Math.PI * 2); ctx.stroke();
-  ctx.strokeStyle = rgba(base, 0.55);
-  ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.arc(cx, cy, 22, 0, Math.PI * 2); ctx.stroke();
-  const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, 18);
-  g.addColorStop(0,   rgba(hi,   0.95));
-  g.addColorStop(0.5, rgba(base, 0.40));
-  g.addColorStop(1,   rgba(base, 0.00));
-  ctx.fillStyle = g;
-  ctx.beginPath(); ctx.arc(cx, cy, 18, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = rgba(core, 1);
-  ctx.beginPath(); ctx.arc(cx, cy, 5, 0, Math.PI * 2); ctx.fill();
+  // Soft outer glow so the pin still reads on bright / busy day-map textures.
+  const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, 62);
+  glow.addColorStop(0,    rgba(base, 0.45));
+  glow.addColorStop(0.55, rgba(base, 0.18));
+  glow.addColorStop(1,    rgba(base, 0.00));
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, size, size);
+  // Solid filled dot (stays legible when small) with a soft edge + lighter center.
+  const fill = ctx.createRadialGradient(cx, cy, 2, cx, cy, 46);
+  fill.addColorStop(0,    rgba(hi,   1));
+  fill.addColorStop(0.55, rgba(base, 1));
+  fill.addColorStop(0.90, rgba(base, 1));
+  fill.addColorStop(1,    rgba(base, 0.00));
+  ctx.fillStyle = fill;
+  ctx.beginPath(); ctx.arc(cx, cy, 46, 0, Math.PI * 2); ctx.fill();
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
   return t;
@@ -1020,8 +1020,8 @@ export class GlobeScene {
       const markerScale = this.options.markerSize ?? 1;
       for (const m of this.markerMeshes) {
         const p = (Math.sin(t * 2.2 + m.userData.phase) * 0.5 + 0.5);
-        m.scale.setScalar((0.055 + p * 0.018) * markerScale);
-        m.material.opacity = 0.55 + p * 0.45;
+        m.scale.setScalar((0.46 + p * 0.10) * markerScale);
+        m.material.opacity = 0.78 + p * 0.22;
       }
     }
 

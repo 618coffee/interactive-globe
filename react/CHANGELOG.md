@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.14.4] - 2026-06-20
+
+### Fixed
+- **WebGL markers were invisible on bright day-map globes.** The webgl marker sprite was a
+  thin ring + faint radial glow scaled to `~0.06 * 0.055` world units (sub-pixel at typical
+  globe sizes), so place pins were effectively invisible in webgl/dark mode — only the flat
+  (light) renderer showed them. The sprite is now a **solid filled dot** (with a soft glow
+  halo) and the base scale is `0.46` (was `0.055`), so markers render as crisp, flat-comparable
+  dots. Marker opacity floor raised to `0.78`.
+
+### Added
+- **`themeColors.marker.blending`** (`'normal' | 'additive'`) is now an overridable per-call
+  field (previously fixed to the theme preset). The dark theme still defaults to `'additive'`
+  (glows nicely on a night globe); pass `'normal'` for solid, opaque pins on a bright day-map
+  texture.
+
 ## [0.14.3] - 2026-06-20
 
 ### Added

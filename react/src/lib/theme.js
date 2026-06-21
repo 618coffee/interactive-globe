@@ -31,9 +31,9 @@ const PRESETS = {
  *
  * @param {'light'|'dark'} [theme]
  * @param {{ background?: number|string,
- *           marker?: { color?: string, highlight?: string, core?: string } }} [overrides]
+ *           marker?: { color?: string, highlight?: string, core?: string, blending?: 'normal'|'additive' } }} [overrides]
  *   Color-only overrides. `background` accepts a CSS string or 0xRRGGBB int.
- *   `marker` is merged onto the preset marker; `blending` stays theme-driven.
+ *   `marker` (including `blending`) is merged onto the preset marker.
  *   Semantic fields (showStars/showAtmosphere/showAurora) are not overridable —
  *   they are tied to the theme, not to a color.
  * @returns the resolved preset. Returns the shared preset object unchanged when
