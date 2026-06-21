@@ -22,10 +22,9 @@ const THEME_TRANSITION_MS = 560;
 
 // Defaults for the configurable "look" props. idleTiltDeg = latitude shown at the
 // disc centre while auto-rotating (matches the flat globe's tilt); spinDegPerSec =
-// auto-rotation speed (matches the flat globe); cameraFov = perspective amount.
+// auto-rotation speed (matches the flat globe).
 const DEFAULT_IDLE_TILT_DEG    = 12;
 const DEFAULT_SPIN_DEG_PER_SEC = 6;
-const DEFAULT_FOV              = 45;
 
 // Camera position whose elevation centres `tiltDeg` of latitude. _applyFit
 // rescales the distance, so only this direction (elevation) matters.
@@ -163,8 +162,6 @@ export class GlobeScene {
       initialView: null,
       idleTiltDeg: DEFAULT_IDLE_TILT_DEG,
       spinDegPerSec: DEFAULT_SPIN_DEG_PER_SEC,
-      cameraFov: DEFAULT_FOV,
-      projection: 'perspective',
       onReady: null,
       onLoad: null,
       onPoiClick: null,
@@ -233,11 +230,9 @@ export class GlobeScene {
     this._backgroundColor = new THREE.Color(this._theme.background);
     this.scene.background = this._backgroundColor;
 
-    const w = this.canvas.clientWidth || 1;
-    const h = this.canvas.clientHeight || 1;
-    this.camera = this.options.projection === 'orthographic'
-      ? new THREE.OrthographicCamera(-1, 1, 1, -1, 0.05, 2000)
-      : new THREE.PerspectiveCamera(this.options.cameraFov, w / h, 0.05, 2000);
+    // Orthographic (parallel) projection — matches the flat D3 geoOrthographic globe
+    // (no perspective bulge). On-screen size comes from the frustum, set in _applyFit.
+    this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.05, 2000);
     this.camera.position.copy(idleCameraVec(this.options.idleTiltDeg));
 
     this.controls = new OrbitControls(this.camera, this.canvas);
@@ -307,15 +302,9 @@ export class GlobeScene {
     this.scene.add(this.clouds);
 
     // The rim-glow shader approximates the silhouette with a constant view
-    // direction (0,0,1) — a parallel-projection assumption. Under a perspective
-    // camera the true silhouette never reaches dot==0, so the visible rim peaked
-    // well below the `0.6` factor (~0.13 at the fit distance). Orthographic makes
-    // that assumption exact, so the full 0.6 became visible and the halo looked
-    // far brighter. Scale the intensity down for orthographic — a touch above the
-    // ~0.13 perspective match so the glow reads as a soft rim without the harsh
-    // full-strength halo.
-    const atmosphereIntensity =
-      this.options.projection === 'orthographic' ? 0.18 : 0.6;
+    // direction (0,0,1), which is exact under the orthographic (parallel) projection.
+    // The full-strength factor would read as a harsh halo, so scale it to a soft rim.
+    const atmosphereIntensity = 0.18;
     this.atmosphere = new THREE.Mesh(
       new THREE.SphereGeometry(1.07, 64, 64),
       new THREE.ShaderMaterial({
@@ -632,11 +621,6 @@ export class GlobeScene {
     if ('enableZoom'   in partial) this.controls.enableZoom = partial.enableZoom;
     if ('enableRotate' in partial) this.controls.enableRotate = partial.enableRotate;
     if ('spinDegPerSec' in partial) this.controls.autoRotateSpeed = autoRotateSpeedFor(partial.spinDegPerSec ?? DEFAULT_SPIN_DEG_PER_SEC);
-    if ('cameraFov' in partial) {
-      this.camera.fov = partial.cameraFov ?? DEFAULT_FOV;
-      this.camera.updateProjectionMatrix();
-      this._applyFit();
-    }
     if ('idleTiltDeg' in partial) this._applyIdleTilt(partial.idleTiltDeg ?? DEFAULT_IDLE_TILT_DEG);
     const themeChanged = 'theme' in partial || 'themeColors' in partial;
     if (themeChanged) this._applyTheme();
@@ -956,17 +940,13 @@ export class GlobeScene {
     const w = this.canvas.clientWidth  || window.innerWidth;
     const h = this.canvas.clientHeight || window.innerHeight;
     this.renderer.setSize(w, h, false);
-    if (this.camera) {
-      this.camera.aspect = w / h;
-      this.camera.updateProjectionMatrix();
-    }
     this._applyFit();
   }
 
   /**
-   * When `options.fit` is set, size the camera so the globe's on-screen radius
-   * is `min(fit.wRatio·w, fit.hRatio·h)` px — matching the flat mode's radius so
-   * the two modes render at the same size. Camera FOV is 45°, sphere radius 1.
+   * When `options.fit` is set, size the orthographic frustum so the globe's
+   * on-screen radius is `min(fit.wRatio·w, fit.hRatio·h)` px — matching the flat
+   * mode's radius so the two modes render at the same size. Sphere radius 1.
    */
   _applyFit() {
     const fit = this.options.fit;
@@ -975,28 +955,16 @@ export class GlobeScene {
     const h = this.canvas.clientHeight || window.innerHeight;
     const radiusPx = Math.min((fit.wRatio ?? 0.42) * w, (fit.hRatio ?? 0.58) * h);
     if (radiusPx <= 0) return;
-    if (this.camera.isOrthographicCamera) {
-      // Parallel projection: size comes from the frustum, not distance. The
-      // viewport height h spans the frustum height, so map the unit-sphere
-      // radius to radiusPx with a half-height of h / (2 * radiusPx).
-      const halfH = h / (2 * radiusPx);
-      const halfW = halfH * (w / h);
-      this.camera.left = -halfW;
-      this.camera.right = halfW;
-      this.camera.top = halfH;
-      this.camera.bottom = -halfH;
-      this.camera.updateProjectionMatrix();
-      this.controls.update();
-      return;
-    }
-    const tanAlpha = (2 * radiusPx * Math.tan((this.camera.fov * Math.PI) / 360)) / h;
-    if (tanAlpha <= 0) return;
-    const dist = Math.sqrt(1 + tanAlpha * tanAlpha) / tanAlpha; // sphere radius 1
-    const cur = this.camera.position.distanceTo(this.controls.target) || 1;
-    this.camera.position
-      .sub(this.controls.target)
-      .multiplyScalar(dist / cur)
-      .add(this.controls.target);
+    // Parallel projection: size comes from the frustum, not distance. The viewport
+    // height h spans the frustum height, so map the unit-sphere radius to radiusPx
+    // with a half-height of h / (2 * radiusPx).
+    const halfH = h / (2 * radiusPx);
+    const halfW = halfH * (w / h);
+    this.camera.left = -halfW;
+    this.camera.right = halfW;
+    this.camera.top = halfH;
+    this.camera.bottom = -halfH;
+    this.camera.updateProjectionMatrix();
     this.controls.update();
   }
 
@@ -1020,8 +988,8 @@ export class GlobeScene {
       const markerScale = this.options.markerSize ?? 1;
       for (const m of this.markerMeshes) {
         const p = (Math.sin(t * 2.2 + m.userData.phase) * 0.5 + 0.5);
-        m.scale.setScalar((0.46 + p * 0.10) * markerScale);
-        m.material.opacity = 0.78 + p * 0.22;
+        m.scale.setScalar((0.40 + p * 0.08) * markerScale);
+        m.material.opacity = 0.9 + p * 0.1;
       }
     }
 

@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-06-21
+
+### Removed
+- **`projection` and `cameraFov` props (BREAKING).** The webgl globe is now always
+  **orthographic** (parallel projection), matching the flat D3 `geoOrthographic` globe, so
+  the perspective camera, its FOV control, the perspective `_applyFit` distance branch, and
+  the projection-aware atmosphere intensity are gone. Callers passing `projection` /
+  `cameraFov` should drop them (the globe already rendered orthographic in practice).
+
+### Changed
+- **Marker dots are larger and more opaque** so the webgl pins read as crisp, flat-comparable
+  dots over a bright day-map: render-loop base scale `0.40` (was `0.46`) and opacity floor
+  `0.9` (was `0.78`).
+
 ## [0.14.4] - 2026-06-20
 
 ### Fixed

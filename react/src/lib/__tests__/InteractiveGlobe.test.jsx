@@ -686,27 +686,25 @@ describe('showLoader prop', () => {
 });
 
 // ==================================================================
-// look config: idleTiltDeg / spinDegPerSec / cameraFov
+// look config: idleTiltDeg / spinDegPerSec
 // ==================================================================
-describe('idleTiltDeg / spinDegPerSec / cameraFov', () => {
+describe('idleTiltDeg / spinDegPerSec', () => {
   it('forwards them to the GlobeScene at construction', async () => {
-    await renderAndLoad(<InteractiveGlobe ui="none" idleTiltDeg={20} spinDegPerSec={3} cameraFov={30} />);
-    expect(sceneInstances[0].options).toMatchObject({ idleTiltDeg: 20, spinDegPerSec: 3, cameraFov: 30 });
+    await renderAndLoad(<InteractiveGlobe ui="none" idleTiltDeg={20} spinDegPerSec={3} />);
+    expect(sceneInstances[0].options).toMatchObject({ idleTiltDeg: 20, spinDegPerSec: 3 });
   });
 
   it('omits them when not provided so the package defaults apply', async () => {
     await renderAndLoad(<InteractiveGlobe ui="none" />);
     expect(sceneInstances[0].options.idleTiltDeg).toBeUndefined();
     expect(sceneInstances[0].options.spinDegPerSec).toBeUndefined();
-    expect(sceneInstances[0].options.cameraFov).toBeUndefined();
   });
 
-  it('forwards spinDegPerSec and cameraFov changes via setOptions', async () => {
-    const { rerender } = await renderAndLoad(<InteractiveGlobe ui="none" spinDegPerSec={6} cameraFov={45} />);
-    rerender(<InteractiveGlobe ui="none" spinDegPerSec={2} cameraFov={20} />);
+  it('forwards spinDegPerSec changes via setOptions', async () => {
+    const { rerender } = await renderAndLoad(<InteractiveGlobe ui="none" spinDegPerSec={6} />);
+    rerender(<InteractiveGlobe ui="none" spinDegPerSec={2} />);
     const calls = sceneInstances[0].calls.setOptions;
     expect(calls).toContainEqual({ spinDegPerSec: 2 });
-    expect(calls).toContainEqual({ cameraFov: 20 });
   });
 
   it('applies idleTiltDeg changes via setOptions but skips the mount run (handoff-safe)', async () => {
@@ -714,16 +712,6 @@ describe('idleTiltDeg / spinDegPerSec / cameraFov', () => {
     expect(sceneInstances[0].calls.setOptions).not.toContainEqual({ idleTiltDeg: 12 });
     rerender(<InteractiveGlobe ui="none" idleTiltDeg={30} />);
     expect(sceneInstances[0].calls.setOptions).toContainEqual({ idleTiltDeg: 30 });
-  });
-
-  it('forwards the projection option to the GlobeScene', async () => {
-    await renderAndLoad(<InteractiveGlobe ui="none" projection="orthographic" />);
-    expect(sceneInstances[0].options.projection).toBe('orthographic');
-  });
-
-  it('omits projection when not provided', async () => {
-    await renderAndLoad(<InteractiveGlobe ui="none" />);
-    expect(sceneInstances[0].options.projection).toBeUndefined();
   });
 });
 
