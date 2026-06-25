@@ -228,7 +228,14 @@ export class GlobeScene {
   _initScene() {
     this.scene = new THREE.Scene();
     this._backgroundColor = new THREE.Color(this._theme.background);
-    this.scene.background = this._backgroundColor;
+    // Stars render in their own scene via a perspective camera (see _loop): the
+    // orthographic main camera's tight frustum clips the distant star sphere, so
+    // the backdrop (sky color + stars) is drawn in a separate pass that fills the
+    // viewport and parallaxes with the orbit. The main scene stays transparent.
+    this.scene.background = null;
+    this.starScene = new THREE.Scene();
+    this.starScene.background = this._backgroundColor;
+    this.starCamera = new THREE.PerspectiveCamera(45, 1, 0.1, 4000);
 
     // Orthographic (parallel) projection — matches the flat D3 geoOrthographic globe
     // (no perspective bulge). On-screen size comes from the frustum, set in _applyFit.
@@ -251,7 +258,7 @@ export class GlobeScene {
     this.controls.autoRotateSpeed = autoRotateSpeedFor(this.options.spinDegPerSec);
 
     this.stars = makeStars();
-    this.scene.add(this.stars);
+    this.starScene.add(this.stars);
     this.stars.material.opacity = this._theme.showStars ? 0.85 : 0;
     this.stars.visible = this.stars.material.opacity > 0.001;
 
@@ -782,6 +789,10 @@ export class GlobeScene {
         }
       }
     });
+    // Stars live in their own scene (see _initScene); the traversal above
+    // doesn't reach them.
+    this.stars.geometry.dispose();
+    this.stars.material.dispose();
     this.markerTex.dispose();
     // Free every cached texture (including theme variants no longer attached to
     // a material, which the scene.traverse above would not reach).
@@ -940,6 +951,10 @@ export class GlobeScene {
     const w = this.canvas.clientWidth  || window.innerWidth;
     const h = this.canvas.clientHeight || window.innerHeight;
     this.renderer.setSize(w, h, false);
+    if (this.starCamera) {
+      this.starCamera.aspect = h > 0 ? w / h : 1;
+      this.starCamera.updateProjectionMatrix();
+    }
     this._applyFit();
   }
 
@@ -995,6 +1010,18 @@ export class GlobeScene {
 
     this.controls.update(dt);
     this._updateLabels();
+
+    // Backdrop pass: a perspective camera mirroring the main camera draws the
+    // sky color + stars so the distant star sphere fills the frame and
+    // parallaxes as the camera orbits. The orthographic main camera's tight
+    // frustum would clip every star, so the globe is composited on top in a
+    // second pass (depth cleared, main scene background transparent).
+    this.starCamera.position.copy(this.camera.position);
+    this.starCamera.quaternion.copy(this.camera.quaternion);
+    this.renderer.autoClear = true;
+    this.renderer.render(this.starScene, this.starCamera);
+    this.renderer.autoClear = false;
+    this.renderer.clearDepth();
     this.renderer.render(this.scene, this.camera);
   }
 

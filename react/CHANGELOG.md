@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.15.1] - 2026-06-25
+
+### Fixed
+- **Stars were invisible under the orthographic camera.** Since 0.15.0 made the
+  webgl globe orthographic-only, the distant star sphere (radius 90–340) fell
+  outside the tight orthographic frustum and `sizeAttenuation` shrank the points
+  to nothing, so the dark-theme starfield vanished. Stars now render in their own
+  scene via a perspective camera that mirrors the main camera (a backdrop pass
+  composited behind the globe), so they fill the frame and parallax with the
+  orbit again. The sky color moved to that backdrop scene; the main scene
+  background is now transparent.
+
 ## [0.15.0] - 2026-06-21
 
 ### Removed
